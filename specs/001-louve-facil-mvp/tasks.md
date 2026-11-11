@@ -28,10 +28,10 @@ Projeto único de SPA na raiz: `src/`, `tests/`, `supabase/migrations/`
 
 **Purpose**: Inicialização do projeto Vite + React + TS e toolchain
 
-- [ ] T001 Scaffold do projeto Vite (react-ts) na raiz: `index.html`, `vite.config.ts`, `tsconfig.json` (strict, alias `@/` → `src/`), `src/main.tsx` e `src/App.tsx` mínimos
-- [ ] T002 Instalar dependências por plan.md: react-router, @supabase/supabase-js, dexie + dexie-react-hooks, @dnd-kit/core + @dnd-kit/sortable, zod, react-hook-form, tailwindcss 4, shadcn/ui (init, componentes base button/input/dialog/label/select/tabs), dev: vitest, @testing-library/react, jsdom, vite-plugin-pwa, sharp
-- [ ] T003 [P] Configurar qualidade: `.eslintrc`/`eslint.config.js` + script `npm run lint`, scripts `dev`/`build`/`test`/`preview` no `package.json`, `.gitignore` (node_modules, dist, .env.local) e `.env.example` (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)
-- [ ] T004 [P] Configurar vite-plugin-pwa base em `vite.config.ts` (registerType autoUpdate, manifest inicial PT-BR com ícones placeholder, workbox generateSW)
+- [x] T001 Scaffold do projeto Vite (react-ts) na raiz: `index.html`, `vite.config.ts`, `tsconfig.json` (strict, alias `@/` → `src/`), `src/main.tsx` e `src/App.tsx` mínimos
+- [x] T002 Instalar dependências por plan.md: react-router, @supabase/supabase-js, dexie + dexie-react-hooks, @dnd-kit/core + @dnd-kit/sortable, zod, react-hook-form, tailwindcss 4, shadcn/ui (init, componentes base button/input/dialog/label/select/tabs), dev: vitest, @testing-library/react, jsdom, vite-plugin-pwa, sharp
+- [x] T003 [P] Configurar qualidade: `.eslintrc`/`eslint.config.js` + script `npm run lint`, scripts `dev`/`build`/`test`/`preview` no `package.json`, `.gitignore` (node_modules, dist, .env.local) e `.env.example` (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)
+- [x] T004 [P] Configurar vite-plugin-pwa base em `vite.config.ts` (registerType autoUpdate, manifest inicial PT-BR com ícones placeholder, workbox generateSW)
 
 **Checkpoint**: `npm run dev`, `npm run build`, `npm test`, `npm run lint` executam sem erro
 

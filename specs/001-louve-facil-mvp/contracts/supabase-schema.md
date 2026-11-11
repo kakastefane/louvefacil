@@ -29,6 +29,7 @@ em `setlist_items`. Triggers `set_updated_at` em `songs` e `setlists`.
 
 | Função | Entrada | Saída / efeito |
 | --- | --- | --- |
+| `create_team` | `p_name text, p_display_name text` | `uuid` (team_id); insere equipe + vínculo `owner` do chamador atômicos (único caminho de criação; `team_members` não aceita insert direto) |
 | `join_team_with_code` | `p_code text, p_display_name text` | `uuid` (team_id) ou erro `invalid_code` / `expired_code` / `revoked_code`; idempotente se já membro |
 | `update_member_role` | `p_member_id uuid, p_role text` | ok; erro se chamador não é dono, alvo é dono ou role inválida |
 | `remove_member` | `p_member_id uuid` | ok; erro se chamador não é dono ou alvo é o dono |

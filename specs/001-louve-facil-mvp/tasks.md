@@ -46,7 +46,7 @@ roteamento. **⚠️ Nenhuma história começa antes desta fase.**
 **⚠️ CRITICAL**: Bloqueia todas as user stories
 
 - [ ] T005 Criar `supabase/migrations/0001_schema.sql` conforme data-model.md: tabelas teams, team_members (unique(team_id,user_id) + unique parcial de um owner), invites (code unique, expires_at, revoked), songs (themes text[] default '{}', content ≤20000 chars, original_key), setlists (event_date), setlist_items (unique(setlist_id,song_id), unique(setlist_id,position) deferrable), índices por team_id, trigger set_updated_at em songs/setlists — tudo idempotente (if not exists)
-- [ ] T006 Criar `supabase/migrations/0002_rls_policies.sql`: enable RLS em todas as tabelas; helpers SECURITY DEFINER `is_team_member/is_team_editor/is_team_owner` (search_path fixo); políticas por tabela conforme matriz do data-model.md; RPCs `join_team_with_code`, `update_member_role`, `remove_member`, `leave_team`, `reorder_setlist`, `duplicate_setlist` com validações de papel
+- [ ] T006 Criar `supabase/migrations/0002_rls_policies.sql`: enable RLS em todas as tabelas; helpers SECURITY DEFINER `is_team_member/is_team_editor/is_team_owner` (search_path fixo); políticas por tabela conforme matriz do data-model.md (`team_members` sem insert direto); RPCs `create_team` (equipe + owner atômicos), `join_team_with_code`, `update_member_role`, `remove_member`, `leave_team`, `reorder_setlist`, `duplicate_setlist` com validações de papel
 - [ ] T007 [P] Criar `src/lib/env.ts` (leitura/validação das env vars + flag `isConfigured`) e `src/lib/supabase.ts` (client único exportado; factory protegida quando não configurado)
 - [ ] T008 [P] Criar `src/types/domain.ts` com os tipos de domínio das 6 entidades (Team, TeamMember, Invite, Song, Setlist, SetlistItem) + `TeamRole`, conformes contracts/supabase-schema.md
 - [ ] T009 Criar cache offline: `src/db/dexie.ts` (IndexedDB v1 espelhando as 6 tabelas com `_fetched_at`) e `src/db/repos/{teams,songs,setlists}.ts` com padrão read-through (renderiza do cache; busca online e sobrescreve; mutações online-only conforme D-2)
@@ -81,7 +81,7 @@ quickstart.md S1/S1b
 
 ### Implementation for User Story 1
 
-- [ ] T020 [P] [US1] Criar service de equipes `src/features/teams/service.ts`: criar equipe (insert teams + team_members owner com display_name do cadastro), listar equipes do usuário (read-through), equipe ativa persistida em localStorage
+- [ ] T020 [P] [US1] Criar service de equipes `src/features/teams/service.ts`: criar equipe via RPC `create_team(name, display_name)` (equipe + vínculo owner atômicos no banco), listar equipes do usuário (read-through), equipe ativa persistida em localStorage
 - [ ] T021 [P] [US1] Criar service de convites `src/features/teams/invites.ts`: gerar (code + expires_at default 7 dias), listar por equipe, revogar; ingresso via RPC `join_team_with_code(code, display_name)`; mapear erros `invalid_code/expired_code/revoked_code`
 - [ ] T022 [P] [US1] Criar service de membros `src/features/teams/members.ts`: listar membros da equipe (read-through), alterar papel e remover via RPCs, `leave_team`
 - [ ] T023 [US1] Criar páginas de autenticação `src/features/auth/pages/LoginPage.tsx` (alternância entrar/criar conta, react-hook-form + zod, erros PT-BR, redirect preservado) e `src/features/auth/pages/RecoverPasswordPage.tsx` (solicitar por e-mail + definir nova senha com token)

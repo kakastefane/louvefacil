@@ -35,10 +35,11 @@ erDiagram
 | created_by | uuid not null → auth.users | dono da equipe |
 | created_at | timestamptz | default `now()` |
 
-Regras: criar equipe cria automaticamente `team_members` do criador com
-papel `owner` (transação client: insert team → insert member; ou RPC — ver
-D-4/contracts). Dono identificado por `created_by` de `teams` **e** papel
-`owner` em `team_members` (ambos sempre consistentes).
+Regras: criar equipe é **sempre** via RPC `create_team` (insere a equipe e o
+vínculo `owner` do criador atômicos no banco — coerente com a restrição
+"insert somente via RPC" da matriz RLS abaixo). Dono identificado por
+`created_by` de `teams` **e** papel `owner` em `team_members` (ambos sempre
+consistentes).
 
 ### team_members — Vínculo usuário ↔ equipe
 
@@ -140,8 +141,8 @@ is_team_owner(p_team_id uuid)  returns boolean  -- vínculo com role = 'owner'
 
 | Tabela | select | insert | update | delete |
 | --- | --- | --- | --- | --- |
-| teams | membro | `created_by = auth.uid()` (dono) | dono | dono |
-| team_members | membro da equipe | **somente via RPC** | dono da equipe (via RPC `update_member_role`) | dono, e não o próprio dono (via RPC `remove_member`/`leave_team`) |
+| teams | membro | **somente via RPC** (`create_team`) | dono | dono |
+| team_members | membro da equipe | **somente via RPC** (`create_team` para o owner; `join_team_with_code` para convidados) | dono da equipe (via RPC `update_member_role`) | dono, e não o próprio dono (via RPC `remove_member`/`leave_team`) |
 | invites | dono | dono | dono (revogar) | dono |
 | songs | membro | editor/dono | editor/dono | editor/dono |
 | setlists | membro | editor/dono | editor/dono | editor/dono |
@@ -151,6 +152,7 @@ RPCs com `SECURITY DEFINER` + `search_path` fixo + validação interna:
 
 | RPC | Assinatura | Valida |
 | --- | --- | --- |
+| create_team | `(p_name text, p_display_name text) returns uuid` | usuário autenticado; insere equipe + vínculo `owner` atômicos (único caminho de criação) |
 | join_team_with_code | `(p_code text, p_display_name text) returns uuid` | convite válido; usuário autenticado; idempotente se já membro |
 | update_member_role | `(p_member_id uuid, p_role text)` | chamador é dono; alvo não é o dono; role ∈ {editor, member} |
 | remove_member | `(p_member_id uuid)` | chamador é dono; alvo não é o dono |

@@ -8,11 +8,18 @@
 
 **Input**: User description: "PWA multiplataforma para equipes de louvor compartilharem cifras e letras padronizadas. Cada membro da equipe se cadastra (e-mail ou Google), cria ou entra em uma equipe via link de convite, e donos/editores cadastram as cifras padronizadas (título, tom, temas, letra com acordes). Todos os membros acessam a biblioteca e os setlists da equipe no navegador ou pelo app instalado (PWA), com leitura offline dos dados já abertos. Inclui editor de cifra com preview ao vivo, visualizador com transposição e fonte ajustável, setlists com reordenação e duplicação, modo 'tocar' para navegar entre músicas do repertório, modo claro/escuro. Membros de outras equipes não têm acesso aos dados — nem por busca, nem por link direto. Escopo definido em `.docs/louve-facil-arquitetura.md`."
 
+## Clarifications
+
+### Session 2026-11-11
+
+- Q: Como o login com Google deve ser tratado no MVP? → A: MVP autentica somente com e-mail e senha; login com Google (social) fica para pós-MVP.
+- Q: Como o projeto Supabase deve ser providenciado para o MVP? → A: O dono do projeto criará o Supabase depois; o desenvolvimento segue sem acesso ao banco, entregando migrações SQL versionadas + instruções de setup; a validação ao vivo do isolamento entre equipes acontece na implantação, pelo dono do projeto.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Acesso à equipe e isolamento de dados (Priority: P1)
 
-Um músico se cadastra no aplicativo (e-mail e senha ou conta Google), cria uma equipe — tornando-se o **dono** — e convida colegas compartilhando um link de convite (com expiração) por WhatsApp. O convidado abre o link, se cadastra e entra na equipe. Cada pessoa tem um papel: dono (gerencia membros e convites), editor (cria/edita cifras e setlists) ou membro (apenas visualiza). Um usuário pode participar de várias equipes e alternar entre elas. Nenhuma equipe consegue ver os dados de outra — nem buscando, nem abrindo links diretos de conteúdo alheio.
+Um músico se cadastra no aplicativo (e-mail e senha), cria uma equipe — tornando-se o **dono** — e convida colegas compartilhando um link de convite (com expiração) por WhatsApp. O convidado abre o link, se cadastra e entra na equipe. Cada pessoa tem um papel: dono (gerencia membros e convites), editor (cria/edita cifras e setlists) ou membro (apenas visualiza). Um usuário pode participar de várias equipes e alternar entre elas. Nenhuma equipe consegue ver os dados de outra — nem buscando, nem abrindo links diretos de conteúdo alheio.
 
 **Why this priority**: É a fundação de todo o produto: sem cadastro, equipe e isolamento, nenhuma outra função tem valor — as cifras são conteúdo privado e colaborativo por equipe. É também o diferencial competitivo declarado (colaborativo por equipe).
 
@@ -125,7 +132,7 @@ O músico instala o aplicativo no celular/tablet/desktop (PWA: "Adicionar à Tel
 **Acesso e perfil**
 
 - **FR-001**: O sistema MUST permitir que um visitante crie uma conta informando e-mail e senha.
-- **FR-002**: O sistema MUST permitir entrada com conta Google (login social), além do e-mail/senha.
+- **FR-002**: O sistema MUST autenticar usuários exclusivamente por e-mail e senha no MVP; login com conta Google (social) fica fora do escopo do MVP (candidato a pós-MVP).
 - **FR-003**: O sistema MUST permitir que o usuário encerre a sessão, e MUST mantê-la válida entre visitas até o logout.
 - **FR-004**: O sistema MUST oferecer recuperação de senha por e-mail para contas de e-mail/senha.
 
@@ -175,7 +182,7 @@ O músico instala o aplicativo no celular/tablet/desktop (PWA: "Adicionar à Tel
 
 ### Key Entities *(include if feature involves data)*
 
-- **Usuário (User)**: pessoa autenticada; identifica-se por e-mail (e/ou conta Google); pode pertencer a várias equipes com papéis distintos em cada uma.
+- **Usuário (User)**: pessoa autenticada; identifica-se por e-mail e senha; pode pertencer a várias equipes com papéis distintos em cada uma.
 - **Equipe (Team)**: grupo colaborativo com nome; criada por um usuário que se torna seu dono; unidade de isolamento de todo o conteúdo.
 - **Membro de Equipe (TeamMember)**: vínculo entre usuário e equipe com papel (`dono`, `editor`, `membro`); único por par equipe–usuário.
 - **Convite (Invite)**: código único por equipe, com prazo de expiração e possibilidade de revogação; usado para ingressar na equipe.
@@ -200,7 +207,8 @@ O músico instala o aplicativo no celular/tablet/desktop (PWA: "Adicionar à Tel
 
 ## Assumptions
 
-- Login com Google depende de credenciais OAuth configuradas no ambiente de implantação; o cadastro por e-mail/senha funciona independentemente e é o caminho garantido.
+- O projeto Supabase é providenciado pelo dono do projeto depois do desenvolvimento: a entrega inclui migrações SQL versionadas (schema + políticas de isolamento) e instruções de setup; a validação ao vivo do isolamento entre equipes (SC-003) ocorre na implantação, com um projeto real.
+- Login com Google (social) ficou fora do escopo do MVP por decisão de esclarecimento (2026-11-11); e-mail/senha é o único caminho de autenticação do MVP.
 - A escrita (criar/editar) exige conexão; apenas a leitura funciona offline (decisão de escopo do MVP).
 - Prazo padrão de expiração de convites: 7 dias, alterável pelo dono ao gerar o convite.
 - Por padrão, a transposição exibe acordes com sustenidos ou bemóis conforme o tom de referência da música (bemóis preferidos em tons de bemol); não há preferência global por usuário no MVP.

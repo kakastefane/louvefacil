@@ -54,11 +54,11 @@ roteamento. **⚠️ Nenhuma história começa antes desta fase.**
 - [x] T011 Implementar parser ChordPro puro em `src/features/chords/parser.ts` (gramática de contracts/chordpro-format.md: metatags, seções, acordes inline, linhas só de acordes, acorde malformado → literal) + testes `tests/unit/chords/parser.test.ts` (casos válidos, malformados, seções, espaçamento)
 - [x] T012 Implementar transpositor puro em `src/features/chords/transpose.ts` (raiz e baixo módulo 12; sufixos intactos; bemóis para F/Bb/Eb/Ab/Db/Gb e menores; `transpose ∈ [-11,+11]`) + testes `tests/unit/chords/transpose.test.ts` (wrap de oitava, enharmonia, acordes com baixo `/X`)
 - [x] T013 Implementar modelagem de render em `src/features/chords/render.ts` (grade de duas linhas: acorde na coluna da sílaba; preservação do texto-fonte) + testes `tests/unit/chords/render.test.ts`
-- [ ] T014 Configurar tema: tokens shadcn/ui em `src/index.css`, estratégia `class` de dark mode, `src/hooks/useTheme.tsx` (system | light | dark persistido, classe no `<html>`) — atende FR-023
-- [ ] T015 Criar shell do app `src/components/layout/AppShell.tsx` (cabeçalho com título da tela, navegação inferior no mobile/lateral no desktop, slot do seletor de equipe, área de conteúdo responsiva ~360px+)
-- [ ] T016 Criar roteamento com guards em `src/App.tsx` + `src/app/guards.tsx`: RequireAuth (→ `/login?redirect=`), RequireTeam (→ `/equipes`), RequireRole (→ tela "Sem permissão"); declarar todas as rotas de contracts/routes.md apontando para páginas placeholder; modo não configurado → `/setup` (página `src/features/settings/pages/SetupPage.tsx`)
-- [ ] T017 [P] Criar componentes compartilhados `src/components/shared/{EmptyState,ErrorState,LoadingState,OfflineBanner}.tsx` + hook `src/hooks/useOnline.ts` (navigator.onLine + listeners)
-- [ ] T018 Criar `src/hooks/useAuth.tsx` (provider de sessão: getSession, onAuthStateChange, signUp com options.data.name, signInWithPassword, resetPasswordForEmail, updateUser password, signOut) — infra de auth usada por US1
+- [x] T014 Configurar tema: tokens shadcn/ui em `src/index.css`, estratégia `class` de dark mode, `src/hooks/useTheme.tsx` (system | light | dark persistido, classe no `<html>`) — atende FR-023
+- [x] T015 Criar shell do app `src/components/layout/AppShell.tsx` (cabeçalho com título da tela, navegação inferior no mobile/lateral no desktop, slot do seletor de equipe, área de conteúdo responsiva ~360px+)
+- [x] T016 Criar roteamento com guards em `src/App.tsx` + `src/app/guards.tsx`: RequireAuth (→ `/login?redirect=`), RequireTeam (→ `/equipes`), RequireRole (→ tela "Sem permissão"); declarar todas as rotas de contracts/routes.md apontando para páginas placeholder; modo não configurado → `/setup` (página `src/features/settings/pages/SetupPage.tsx`)
+- [x] T017 [P] Criar componentes compartilhados `src/components/shared/{EmptyState,ErrorState,LoadingState,OfflineBanner}.tsx` + hook `src/hooks/useOnline.ts` (navigator.onLine + listeners)
+- [x] T018 Criar `src/hooks/useAuth.tsx` (provider de sessão: getSession, onAuthStateChange, signUp com options.data.name, signInWithPassword, resetPasswordForEmail, updateUser password, signOut) — infra de auth usada por US1
 
 **Checkpoint**: Fundação pronta — histórias podem começar (US1 primeiro)
 

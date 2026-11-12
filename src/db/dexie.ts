@@ -13,9 +13,7 @@ import type {
  * leitura offline do conteúdo já aberto; `_fetched_at` marca a hora da
  * sincronização para last-write-wins do servidor sobre o cache.
  */
-export interface Cached<T> extends T {
-  _fetched_at: number
-}
+export type Cached<T> = T & { _fetched_at: number }
 
 export type CachedTeam = Cached<Team>
 export type CachedTeamMember = Cached<TeamMember>

@@ -78,6 +78,9 @@ export function renderSong(parsed: ParsedSong, options: RenderOptions = {}): Ren
           chords: transposeSlots(line.chords, semitones, reference),
           text: line.text,
         }
+      default:
+        // metatags nunca chegam às linhas parseadas
+        return { type: 'empty' }
     }
   })
 

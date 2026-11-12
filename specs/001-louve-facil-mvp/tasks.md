@@ -45,15 +45,15 @@ roteamento. **⚠️ Nenhuma história começa antes desta fase.**
 
 **⚠️ CRITICAL**: Bloqueia todas as user stories
 
-- [ ] T005 Criar `supabase/migrations/0001_schema.sql` conforme data-model.md: tabelas teams, team_members (unique(team_id,user_id) + unique parcial de um owner), invites (code unique, expires_at, revoked), songs (themes text[] default '{}', content ≤20000 chars, original_key), setlists (event_date), setlist_items (unique(setlist_id,song_id), unique(setlist_id,position) deferrable), índices por team_id, trigger set_updated_at em songs/setlists — tudo idempotente (if not exists)
-- [ ] T006 Criar `supabase/migrations/0002_rls_policies.sql`: enable RLS em todas as tabelas; helpers SECURITY DEFINER `is_team_member/is_team_editor/is_team_owner` (search_path fixo); políticas por tabela conforme matriz do data-model.md (`team_members` sem insert direto); RPCs `create_team` (equipe + owner atômicos), `join_team_with_code`, `update_member_role`, `remove_member`, `leave_team`, `reorder_setlist`, `duplicate_setlist` com validações de papel
-- [ ] T007 [P] Criar `src/lib/env.ts` (leitura/validação das env vars + flag `isConfigured`) e `src/lib/supabase.ts` (client único exportado; factory protegida quando não configurado)
-- [ ] T008 [P] Criar `src/types/domain.ts` com os tipos de domínio das 6 entidades (Team, TeamMember, Invite, Song, Setlist, SetlistItem) + `TeamRole`, conformes contracts/supabase-schema.md
-- [ ] T009 Criar cache offline: `src/db/dexie.ts` (IndexedDB v1 espelhando as 6 tabelas com `_fetched_at`) e `src/db/repos/{teams,songs,setlists}.ts` com padrão read-through (renderiza do cache; busca online e sobrescreve; mutações online-only conforme D-2)
-- [ ] T010 [P] Criar `src/lib/utils.ts`: `cn()`, geração de código de convite (URL-safe ≥8 chars), normalização de temas (trim, dedupe case-insensitive), formatação de datas PT-BR, helpers de validade de convite
-- [ ] T011 Implementar parser ChordPro puro em `src/features/chords/parser.ts` (gramática de contracts/chordpro-format.md: metatags, seções, acordes inline, linhas só de acordes, acorde malformado → literal) + testes `tests/unit/chords/parser.test.ts` (casos válidos, malformados, seções, espaçamento)
-- [ ] T012 Implementar transpositor puro em `src/features/chords/transpose.ts` (raiz e baixo módulo 12; sufixos intactos; bemóis para F/Bb/Eb/Ab/Db/Gb e menores; `transpose ∈ [-11,+11]`) + testes `tests/unit/chords/transpose.test.ts` (wrap de oitava, enharmonia, acordes com baixo `/X`)
-- [ ] T013 Implementar modelagem de render em `src/features/chords/render.ts` (grade de duas linhas: acorde na coluna da sílaba; preservação do texto-fonte) + testes `tests/unit/chords/render.test.ts`
+- [x] T005 Criar `supabase/migrations/0001_schema.sql` conforme data-model.md: tabelas teams, team_members (unique(team_id,user_id) + unique parcial de um owner), invites (code unique, expires_at, revoked), songs (themes text[] default '{}', content ≤20000 chars, original_key), setlists (event_date), setlist_items (unique(setlist_id,song_id), unique(setlist_id,position) deferrable), índices por team_id, trigger set_updated_at em songs/setlists — tudo idempotente (if not exists)
+- [x] T006 Criar `supabase/migrations/0002_rls_policies.sql`: enable RLS em todas as tabelas; helpers SECURITY DEFINER `is_team_member/is_team_editor/is_team_owner` (search_path fixo); políticas por tabela conforme matriz do data-model.md (`team_members` sem insert direto); RPCs `create_team` (equipe + owner atômicos), `join_team_with_code`, `update_member_role`, `remove_member`, `leave_team`, `reorder_setlist`, `duplicate_setlist` com validações de papel
+- [x] T007 [P] Criar `src/lib/env.ts` (leitura/validação das env vars + flag `isConfigured`) e `src/lib/supabase.ts` (client único exportado; factory protegida quando não configurado)
+- [x] T008 [P] Criar `src/types/domain.ts` com os tipos de domínio das 6 entidades (Team, TeamMember, Invite, Song, Setlist, SetlistItem) + `TeamRole`, conformes contracts/supabase-schema.md
+- [x] T009 Criar cache offline: `src/db/dexie.ts` (IndexedDB v1 espelhando as 6 tabelas com `_fetched_at`) e `src/db/repos/{teams,songs,setlists}.ts` com padrão read-through (renderiza do cache; busca online e sobrescreve; mutações online-only conforme D-2)
+- [x] T010 [P] Criar `src/lib/utils.ts`: `cn()`, geração de código de convite (URL-safe ≥8 chars), normalização de temas (trim, dedupe case-insensitive), formatação de datas PT-BR, helpers de validade de convite
+- [x] T011 Implementar parser ChordPro puro em `src/features/chords/parser.ts` (gramática de contracts/chordpro-format.md: metatags, seções, acordes inline, linhas só de acordes, acorde malformado → literal) + testes `tests/unit/chords/parser.test.ts` (casos válidos, malformados, seções, espaçamento)
+- [x] T012 Implementar transpositor puro em `src/features/chords/transpose.ts` (raiz e baixo módulo 12; sufixos intactos; bemóis para F/Bb/Eb/Ab/Db/Gb e menores; `transpose ∈ [-11,+11]`) + testes `tests/unit/chords/transpose.test.ts` (wrap de oitava, enharmonia, acordes com baixo `/X`)
+- [x] T013 Implementar modelagem de render em `src/features/chords/render.ts` (grade de duas linhas: acorde na coluna da sílaba; preservação do texto-fonte) + testes `tests/unit/chords/render.test.ts`
 - [ ] T014 Configurar tema: tokens shadcn/ui em `src/index.css`, estratégia `class` de dark mode, `src/hooks/useTheme.tsx` (system | light | dark persistido, classe no `<html>`) — atende FR-023
 - [ ] T015 Criar shell do app `src/components/layout/AppShell.tsx` (cabeçalho com título da tela, navegação inferior no mobile/lateral no desktop, slot do seletor de equipe, área de conteúdo responsiva ~360px+)
 - [ ] T016 Criar roteamento com guards em `src/App.tsx` + `src/app/guards.tsx`: RequireAuth (→ `/login?redirect=`), RequireTeam (→ `/equipes`), RequireRole (→ tela "Sem permissão"); declarar todas as rotas de contracts/routes.md apontando para páginas placeholder; modo não configurado → `/setup` (página `src/features/settings/pages/SetupPage.tsx`)
@@ -77,7 +77,7 @@ quickstart.md S1/S1b
 
 ### Tests for User Story 1
 
-- [ ] T019 [P] [US1] Testes de unidade das regras de papel (owner/editor/member: pode editar? gerenciar convites?) e validade de convite (expiração/revogação) em `tests/unit/teams/roles.test.ts` e `tests/unit/teams/invites.test.ts`
+- [x] T019 [P] [US1] Testes de unidade das regras de papel (owner/editor/member: pode editar? gerenciar convites?) e validade de convite (expiração/revogação) em `tests/unit/teams/roles.test.ts` e `tests/unit/teams/invites.test.ts`
 
 ### Implementation for User Story 1
 

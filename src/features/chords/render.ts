@@ -1,0 +1,108 @@
+/**
+ * Modelagem de render (contrato: contracts/chordpro-format.md):
+ * transforma a cifra parseada em linhas prontas para a grade de duas
+ * linhas (acorde acima, alinhado à coluna da sílaba). Puro — sem DOM.
+ */
+
+import type { ChordSlot, ParsedSong } from './parser'
+import { transposeChord, transposeKey } from './transpose'
+
+export interface RenderedChord {
+  /** Acorde já transposto (ou literal, se malformado). */
+  label: string
+  /** Coluna alvo na linha de letra. */
+  col: number
+}
+
+export type RenderedLine =
+  | { type: 'empty' }
+  | { type: 'section'; label: string; chords: RenderedChord[]; text: string }
+  | { type: 'lyric'; chords: RenderedChord[]; text: string }
+  | { type: 'chords'; chords: RenderedChord[]; text: string }
+
+export interface RenderedSong {
+  title: string | null
+  artist: string | null
+  /** Tom de referência original (sem desvio). */
+  key: string | null
+  /** Tom exibido (referência + desvio). */
+  displayedKey: string | null
+  lines: RenderedLine[]
+}
+
+export interface RenderOptions {
+  /** Desvio em semitons (−11..+11). */
+  semitones?: number
+  /** Tom de referência (original_key da coluna ou metatag {key}). */
+  referenceKey?: string | null
+}
+
+function transposeAll(chords: string[], semitones: number, reference: string | null): RenderedChord[] {
+  return chords.map((chord, index) => ({
+    label: transposeChord(chord, semitones, reference),
+    col: index * 6, // espaçamento fixo para linhas só de acordes
+  }))
+}
+
+function transposeSlots(slots: ChordSlot[], semitones: number, reference: string | null): RenderedChord[] {
+  return slots.map((slot) => ({
+    label: transposeChord(slot.chord, semitones, reference),
+    col: slot.col,
+  }))
+}
+
+export function renderSong(parsed: ParsedSong, options: RenderOptions = {}): RenderedSong {
+  const semitones = options.semitones ?? 0
+  const reference = options.referenceKey ?? parsed.key ?? null
+
+  const lines: RenderedLine[] = parsed.lines.map((line) => {
+    switch (line.type) {
+      case 'empty':
+        return { type: 'empty' }
+      case 'section':
+        return {
+          type: 'section',
+          label: line.label,
+          chords: transposeAll(line.chords, semitones, reference),
+          text: '',
+        }
+      case 'chords':
+        return {
+          type: 'chords',
+          chords: transposeAll(line.chords, semitones, reference),
+          text: '',
+        }
+      case 'lyric':
+        return {
+          type: 'lyric',
+          chords: transposeSlots(line.chords, semitones, reference),
+          text: line.text,
+        }
+    }
+  })
+
+  return {
+    title: parsed.title,
+    artist: parsed.artist,
+    key: parsed.key,
+    displayedKey: parsed.key ? transposeKey(parsed.key, semitones) : null,
+    lines,
+  }
+}
+
+/**
+ * Converte os acordes de uma linha em segmentos com espaçamento, evitando
+ * sobreposição: cada acorde anda ao menos 1 coluna após o anterior.
+ */
+export function buildChordSegments(
+  chords: RenderedChord[],
+): { label: string; pad: number }[] {
+  const segments: { label: string; pad: number }[] = []
+  let cursor = 0
+  for (const chord of chords) {
+    const pad = Math.max(chord.col - cursor, cursor === 0 && chord.col === 0 ? 0 : 1)
+    segments.push({ label: chord.label, pad })
+    cursor = chord.col + Math.max(chord.label.length, 1)
+  }
+  return segments
+}

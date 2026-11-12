@@ -1,5 +1,5 @@
 import { requireSupabase } from '@/lib/supabase'
-import { isOnline, normalizeThemes } from '@/lib/utils'
+import { assertOnline, isOnline, normalizeThemes } from '@/lib/utils'
 import type { Song, SongDraft } from '@/types/domain'
 import { db, stamped } from '../dexie'
 
@@ -54,6 +54,7 @@ export async function createSong(
   createdBy: string,
   draft: SongDraft,
 ): Promise<Song> {
+  assertOnline()
   const supabase = requireSupabase()
   const payload = {
     team_id: teamId,
@@ -79,6 +80,7 @@ export async function updateSong(
   id: string,
   draft: SongDraft,
 ): Promise<Song> {
+  assertOnline()
   const supabase = requireSupabase()
   const payload = {
     title: draft.title.trim(),
@@ -101,6 +103,7 @@ export async function updateSong(
 
 /** Exclui a cifra (cascata remove itens de setlists no banco). */
 export async function deleteSong(id: string): Promise<void> {
+  assertOnline()
   const supabase = requireSupabase()
   const { error } = await supabase.from('songs').delete().eq('id', id)
   if (error) throw error

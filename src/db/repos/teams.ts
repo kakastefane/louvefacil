@@ -1,5 +1,5 @@
 import { requireSupabase } from '@/lib/supabase'
-import { defaultInviteExpiry, isOnline } from '@/lib/utils'
+import { assertOnline, defaultInviteExpiry, isOnline } from '@/lib/utils'
 import type { Invite, Team, TeamMember } from '@/types/domain'
 import { db, stamped } from '../dexie'
 
@@ -97,6 +97,7 @@ export async function updateDisplayName(
   memberId: string,
   displayName: string,
 ): Promise<TeamMember> {
+  assertOnline()
   const supabase = requireSupabase()
   const { data, error } = await supabase
     .from('team_members')
@@ -135,6 +136,7 @@ export async function createInvite(
   code: string,
   expiresAt?: string,
 ): Promise<Invite> {
+  assertOnline()
   const supabase = requireSupabase()
   const { data, error } = await supabase
     .from('invites')
@@ -153,6 +155,7 @@ export async function createInvite(
 
 /** Revoga um convite. */
 export async function revokeInvite(inviteId: string): Promise<Invite> {
+  assertOnline()
   const supabase = requireSupabase()
   const { data, error } = await supabase
     .from('invites')

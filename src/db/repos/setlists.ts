@@ -1,5 +1,5 @@
 import { requireSupabase } from '@/lib/supabase'
-import { isOnline } from '@/lib/utils'
+import { assertOnline, isOnline } from '@/lib/utils'
 import type { Setlist, SetlistItem } from '@/types/domain'
 import { db, stamped } from '../dexie'
 
@@ -54,6 +54,7 @@ export async function createSetlist(
   name: string,
   eventDate: string | null,
 ): Promise<Setlist> {
+  assertOnline()
   const supabase = requireSupabase()
   const { data, error } = await supabase
     .from('setlists')
@@ -75,6 +76,7 @@ export async function updateSetlist(
   id: string,
   patch: { name?: string; event_date?: string | null },
 ): Promise<Setlist> {
+  assertOnline()
   const supabase = requireSupabase()
   const { data, error } = await supabase
     .from('setlists')
@@ -89,6 +91,7 @@ export async function updateSetlist(
 }
 
 export async function deleteSetlist(id: string): Promise<void> {
+  assertOnline()
   const supabase = requireSupabase()
   const { error } = await supabase.from('setlists').delete().eq('id', id)
   if (error) throw error
@@ -128,6 +131,7 @@ export async function addItem(
   setlistId: string,
   songId: string,
 ): Promise<SetlistItem> {
+  assertOnline()
   const supabase = requireSupabase()
   const existing = await db.setlistItems
     .where('setlist_id')
@@ -147,6 +151,7 @@ export async function addItem(
 }
 
 export async function removeItem(itemId: string): Promise<void> {
+  assertOnline()
   const supabase = requireSupabase()
   const cached = await db.setlistItems.get(itemId)
   const { error } = await supabase
@@ -166,6 +171,7 @@ export async function setItemTranspose(
   itemId: string,
   transpose: number,
 ): Promise<SetlistItem> {
+  assertOnline()
   const supabase = requireSupabase()
   const clamped = Math.max(-11, Math.min(11, Math.round(transpose)))
   const { data, error } = await supabase
@@ -185,6 +191,7 @@ export async function reorderItems(
   setlistId: string,
   orderedItemIds: string[],
 ): Promise<void> {
+  assertOnline()
   const supabase = requireSupabase()
   const { error } = await supabase.rpc('reorder_setlist', {
     p_setlist_id: setlistId,
@@ -211,6 +218,7 @@ export async function duplicateSetlist(
   setlistId: string,
   newName: string,
 ): Promise<Setlist> {
+  assertOnline()
   const supabase = requireSupabase()
   const { data, error } = await supabase.rpc('duplicate_setlist', {
     p_setlist_id: setlistId,

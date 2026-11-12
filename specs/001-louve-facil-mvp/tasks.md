@@ -182,11 +182,11 @@ preserva texto. Roteiro em quickstart.md S5
 
 ### Implementation for User Story 5
 
-- [ ] T045 [P] [US5] Criar ícone mestre `scripts/icon.svg` (logo "Louve Fácil") + script `scripts/generate-icons.mjs` (sharp) gerando `public/icons/{icon-192.png,icon-512.png,icon-maskable-192.png,icon-maskable-512.png,apple-touch-icon.png}`
-- [ ] T046 [US5] Finalizar manifest em `vite.config.ts` (nome "Louve Fácil", short_name, display standalone, theme/background color, ícones T045, lang pt-BR) + metas iOS (apple-touch-icon, capable) em `index.html`
-- [ ] T047 [US5] Configurar service worker (generateSW): precache do app shell + fallback de navegação offline para `index.html`; verificar atualização silenciosa (autoUpdate)
-- [ ] T048 [US5] Completar garantias offline nos repos (T009): biblioteca/cifra/setlist/tocar renderizam de Dexie sem rede; conteúdo nunca aberto offline → estado informativo com CTA abrir online (FR-033); escrita offline → aviso "Sem conexão — a alteração exige internet" com texto preservado (FR-032); banner global offline (OfflineBanner) no AppShell
-- [ ] T049 [US5] Garantir logout/limpeza: `signOut` apaga base Dexie local e reseta equipe ativa; troca de conta não vaza conteúdo da equipe anterior
+- [x] T045 [P] [US5] Criar ícone mestre `scripts/icon.svg` (logo "Louve Fácil") + script `scripts/generate-icons.mjs` (sharp) gerando `public/icons/{icon-192.png,icon-512.png,icon-maskable-192.png,icon-maskable-512.png,apple-touch-icon.png}`
+- [x] T046 [US5] Finalizar manifest em `vite.config.ts` (nome "Louve Fácil", short_name, display standalone, theme/background color, ícones T045, lang pt-BR) + metas iOS (apple-touch-icon, capable) em `index.html`
+- [x] T047 [US5] Configurar service worker (generateSW): precache do app shell + fallback de navegação offline para `index.html`; verificar atualização silenciosa (autoUpdate)
+- [x] T048 [US5] Completar garantias offline nos repos (T009): biblioteca/cifra/setlist/tocar renderizam de Dexie sem rede; conteúdo nunca aberto offline → estado informativo com CTA abrir online (FR-033); escrita offline → aviso "Sem conexão — a alteração exige internet" com texto preservado (FR-032); banner global offline (OfflineBanner) no AppShell
+- [x] T049 [US5] Garantir logout/limpeza: `signOut` apaga base Dexie local e reseta equipe ativa; troca de conta não vaza conteúdo da equipe anterior
 
 **Checkpoint**: US1–US5 funcionam (quickstart S5)
 

@@ -12,6 +12,13 @@ export function isOnline(): boolean {
   return typeof navigator === 'undefined' || navigator.onLine
 }
 
+/** Escrita exige conexão (FR-032): lança erro amigável quando offline. */
+export function assertOnline(): void {
+  if (!isOnline()) {
+    throw new Error('offline_write')
+  }
+}
+
 const INVITE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789' // sem 0/O/1/I/L confusos
 
 /** Código de convite URL-safe, >= 8 caracteres (contrato do banco). */
@@ -107,6 +114,8 @@ export function friendlyErrorMessage(error: unknown): string {
     return 'O dono não pode sair da própria equipe.'
   if (message.includes('cannot_remove_owner') || message.includes('cannot_change_owner'))
     return 'Ação não permitida sobre o dono da equipe.'
+  if (message.includes('offline_write'))
+    return 'Sem conexão — criar e editar exige internet. O que você digitou continua na tela.'
   if (
     message.includes('Failed to fetch') ||
     message.toLowerCase().includes('network')

@@ -2,14 +2,14 @@
   "version": "1.4.1.dev0",
   "integration_state_schema": 1,
   "installed_integrations": [
-    "dsh"
+    "opencode"
   ],
   "integration_settings": {
-    "dsh": {
+    "opencode": {
       "script": "sh",
-      "invoke_separator": "-"
+      "invoke_separator": "."
     }
   },
-  "integration": "dsh",
-  "default_integration": "dsh"
+  "integration": "opencode",
+  "default_integration": "opencode"
 }

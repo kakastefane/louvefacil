@@ -7,7 +7,6 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states
 import { SongViewer } from '@/features/songs/components/SongViewer'
 import { listSongs } from '@/features/songs/service'
 import { getSetlist, listItems } from '@/features/setlists/service'
-import { transposeKey } from '@/features/chords/transpose'
 import { useTeam } from '@/features/teams/TeamContext'
 import type { Setlist, SetlistItem, Song } from '@/types/domain'
 
@@ -15,18 +14,6 @@ type LoadState = 'loading' | 'ready' | 'missing' | 'error'
 
 /** Largura mínima horizontal (px) para reconhecer um swipe. */
 const SWIPE_THRESHOLD_PX = 48
-
-function formatSemitoneOffset(transpose: number): string {
-  return `${transpose > 0 ? '+' : ''}${transpose}`
-}
-
-/** Texto "Tom:" do item atual (mesmo formato FR-017/FR-020 do SongViewer). */
-function itemKeyLabel(originalKey: string | null, transpose: number): string {
-  if (!originalKey) return 'Tom não informado'
-  if (transpose === 0) return `Tom: ${originalKey}`
-  const displayed = transposeKey(originalKey, transpose) ?? originalKey
-  return `Tom: ${originalKey} → ${displayed} (${formatSemitoneOffset(transpose)})`
-}
 
 /**
  * Modo tocar (T043) — rota /setlist/:id/tocar. Uma música por vez, ocupando
@@ -216,18 +203,13 @@ export function PlayModePage() {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Barra superior: nome do setlist + tom do item + sair */}
+      {/* Barra superior: nome do setlist + sair */}
       {showChrome ? (
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border pb-2">
           <div className="min-w-0 flex-1 space-y-0.5">
             <p className="truncate text-sm font-semibold leading-tight" title={setlist.name}>
               {setlist.name}
             </p>
-            {currentSong ? (
-              <p className="text-xs font-medium text-muted-foreground">
-                {itemKeyLabel(currentSong.original_key, currentItem?.transpose ?? 0)}
-              </p>
-            ) : null}
           </div>
           <Button
             variant="ghost"

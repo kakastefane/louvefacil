@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button'
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states'
 import { SongViewer } from '@/features/songs/components/SongViewer'
 import {
-  TransposeControls,
+  ViewerToolbar,
   clampTranspose,
+  loadViewerFontSize,
+  saveViewerFontSize,
 } from '@/features/songs/components/ViewerControls'
 import { listSongs } from '@/features/songs/service'
 import { getSetlist, listItems } from '@/features/setlists/service'
@@ -19,13 +21,44 @@ type LoadState = 'loading' | 'ready' | 'missing' | 'error'
 /** Largura mínima horizontal (px) para reconhecer um swipe. */
 const SWIPE_THRESHOLD_PX = 48
 
+/** localStorage: ajuste de tom por item, por setlist e por dispositivo. */
+function transposeStorageKey(setlistId: string): string {
+  return `louve-facil:playmode-transpose:${setlistId}`
+}
+
+function loadTransposeOverrides(setlistId: string): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(transposeStorageKey(setlistId))
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as Record<string, unknown>
+    const result: Record<string, number> = {}
+    for (const [itemId, value] of Object.entries(parsed)) {
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        result[itemId] = clampTranspose(value)
+      }
+    }
+    return result
+  } catch {
+    return {}
+  }
+}
+
+function saveTransposeOverrides(setlistId: string, overrides: Record<string, number>): void {
+  try {
+    localStorage.setItem(transposeStorageKey(setlistId), JSON.stringify(overrides))
+  } catch {
+    // armazenamento indisponível: segue só em memória
+  }
+}
+
 /**
  * Modo tocar (T043) — rota /setlist/:id/tocar. Uma música por vez, ocupando
  * a tela, para apresentar no culto. O alterador de tom (acima da cifra,
- * abaixo dos temas) ajusta a exibição em memória por sessão — não grava no
- * banco; o tom persistente do item é o definido no detalhe do setlist.
+ * abaixo dos temas) grava o ajuste no localStorage deste dispositivo, por
+ * setlist e por música — sai, recarrega, volta: o ajuste permanece.
+ * Nunca grava no banco; o tom salvo no detalhe do setlist é o padrão.
  * Todos os papéis (inclusive 'member') podem usar — sem RequireEditor.
- * A posição e os ajustes de tom não persistem: refresh volta ao estado inicial.
+ * A posição na lista não persiste: refresh volta para a primeira música.
  */
 export function PlayModePage() {
   const { id } = useParams<{ id: string }>()
@@ -38,7 +71,11 @@ export function PlayModePage() {
   const [songsById, setSongsById] = useState<Map<string, Song>>(new Map())
   const [loadState, setLoadState] = useState<LoadState>('loading')
   const [index, setIndex] = useState(0)
-  const [transposeOverrides, setTransposeOverrides] = useState<Record<string, number>>({})
+  // Ajustes de tom por item: persistem neste dispositivo (localStorage, por setlist)
+  const [transposeOverrides, setTransposeOverrides] = useState<Record<string, number>>(() =>
+    id ? loadTransposeOverrides(id) : {},
+  )
+  const [fontSize, setFontSize] = useState<number>(() => loadViewerFontSize())
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
 
   // Uma carga só: setlist + itens + cifras da equipe montadas em Map (id→Song).
@@ -78,9 +115,10 @@ export function PlayModePage() {
     void load()
   }, [load])
 
-  // Ao trocar de setlist, volta para a primeira música
+  // Ao trocar de setlist, volta para a primeira música e recarrega os ajustes do dispositivo
   useEffect(() => {
     setIndex(0)
+    setTransposeOverrides(id ? loadTransposeOverrides(id) : {})
   }, [id])
 
   // Índice sempre dentro dos limites da lista (itens podem mudar após reload)
@@ -142,14 +180,25 @@ export function PlayModePage() {
 
   const currentItem = items[safeIndex] ?? null
   const currentSong = currentItem ? (songsById.get(currentItem.song_id) ?? null) : null
-  // Ajuste de tom por sessão (em memória): não grava no banco — o tom
-  // persistente do item é o definido no detalhe do setlist.
+  // Ajuste de tom por item persistido no localStorage deste dispositivo.
+  // O banco nunca é tocado — o tom salvo no setlist (detalhe) é só o ponto de partida.
   const currentTranspose = currentItem
     ? (transposeOverrides[currentItem.id] ?? currentItem.transpose)
     : 0
   const setCurrentTranspose = (next: number) => {
-    if (!currentItem) return
-    setTransposeOverrides((prev) => ({ ...prev, [currentItem.id]: clampTranspose(next) }))
+    if (!currentItem || !id) return
+    const clamped = clampTranspose(next)
+    const nextMap = { ...transposeOverrides }
+    // ajuste igual ao tom salvo no setlist → limpamos o override (volta ao padrão)
+    if (clamped === currentItem.transpose) delete nextMap[currentItem.id]
+    else nextMap[currentItem.id] = clamped
+    setTransposeOverrides(nextMap)
+    saveTransposeOverrides(id, nextMap)
+  }
+
+  const handleFontSizeChange = (next: number) => {
+    setFontSize(next)
+    saveViewerFontSize(next)
   }
 
   function renderBody() {
@@ -206,9 +255,15 @@ export function PlayModePage() {
       <SongViewer
         song={currentSong}
         transpose={currentTranspose}
-        fontSize={18}
+        fontSize={fontSize}
         controls={
-          <TransposeControls transpose={currentTranspose} onTransposeChange={setCurrentTranspose} />
+          <ViewerToolbar
+            transpose={currentTranspose}
+            onTransposeChange={setCurrentTranspose}
+            transposeResetTo={currentItem.transpose}
+            fontSize={fontSize}
+            onFontSizeChange={handleFontSizeChange}
+          />
         }
       />
     )

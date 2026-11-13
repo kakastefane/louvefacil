@@ -73,18 +73,20 @@ export interface TransposeControlsProps {
   transpose: number
   /** Chamado com o próximo desvio, sempre clampado em [TRANSPOSE_MIN, TRANSPOSE_MAX]. */
   onTransposeChange: (next: number) => void
+  /** Valor de redefinição (padrão 0); botão só aparece quando o atual é diferente. */
+  resetTo?: number
   /** Classes extras no contêiner. */
   className?: string
 }
 
 /**
- * Alterador de tom em semitons (FR-019/FR-022): botões grandes com reset.
- * Feito para ficar visível — renderize entre o cabeçalho (temas) e a cifra.
+ * Alterador de tom em semitons (FR-019/FR-022): botões no estilo padrão do app.
  * Componente 100% controlado — a persistência fica a cargo da página.
  */
 export function TransposeControls({
   transpose,
   onTransposeChange,
+  resetTo = 0,
   className,
 }: TransposeControlsProps): JSX.Element {
   const clampedTranspose = clampTranspose(transpose)
@@ -97,10 +99,7 @@ export function TransposeControls({
 
   return (
     <div
-      className={cn(
-        'flex items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5',
-        className,
-      )}
+      className={cn('flex items-center gap-2', className)}
       role="group"
       aria-label="Transposição"
     >
@@ -131,17 +130,53 @@ export function TransposeControls({
       >
         <Plus aria-hidden="true" />
       </Button>
-      {clampedTranspose !== 0 && (
+      {clampedTranspose !== resetTo && (
         <Button
           type="button"
           variant="outline"
           size="icon"
           aria-label="Redefinir transposição"
-          onClick={() => onTransposeChange(0)}
+          onClick={() => onTransposeChange(resetTo)}
         >
           <RotateCcw aria-hidden="true" />
         </Button>
       )}
+    </div>
+  )
+}
+
+/**
+ * Barra única renderizada acima da cifra (abaixo dos temas), na mesma linha:
+ * seletor de tom à esquerda e tamanho da letra à direita (FR-019/FR-021/FR-022/FR-023).
+ * Componentes 100% controlados — a persistência fica a cargo da página.
+ */
+export interface ViewerToolbarProps {
+  transpose: number
+  onTransposeChange: (next: number) => void
+  /** Valor de redefinição do tom (padrão 0). */
+  transposeResetTo?: number
+  fontSize: number
+  onFontSizeChange: (next: number) => void
+  /** Classes extras no contêiner. */
+  className?: string
+}
+
+export function ViewerToolbar({
+  transpose,
+  onTransposeChange,
+  transposeResetTo,
+  fontSize,
+  onFontSizeChange,
+  className,
+}: ViewerToolbarProps): JSX.Element {
+  return (
+    <div className={cn('flex items-center justify-between gap-3', className)}>
+      <TransposeControls
+        transpose={transpose}
+        onTransposeChange={onTransposeChange}
+        resetTo={transposeResetTo}
+      />
+      <FontSizeControls fontSize={fontSize} onFontSizeChange={onFontSizeChange} />
     </div>
   )
 }
@@ -178,10 +213,7 @@ export function FontSizeControls({
 
   return (
     <div
-      className={cn(
-        'flex items-center justify-center gap-2 border-t border-border bg-background/95 px-3 py-2 backdrop-blur',
-        className,
-      )}
+      className={cn('flex items-center gap-2', className)}
       role="group"
       aria-label="Tamanho da fonte"
     >

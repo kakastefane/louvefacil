@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button'
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states'
 import { SongViewer } from '@/features/songs/components/SongViewer'
 import {
-  FontSizeControls,
-  TransposeControls,
+  ViewerToolbar,
   loadViewerFontSize,
   saveViewerFontSize,
 } from '@/features/songs/components/ViewerControls'
@@ -102,7 +101,12 @@ export function SongViewerPage() {
         transpose={transpose}
         fontSize={fontSize}
         controls={
-          <TransposeControls transpose={transpose} onTransposeChange={setTranspose} />
+          <ViewerToolbar
+            transpose={transpose}
+            onTransposeChange={setTranspose}
+            fontSize={fontSize}
+            onFontSizeChange={handleFontSizeChange}
+          />
         }
       />
     )
@@ -130,14 +134,6 @@ export function SongViewerPage() {
 
       {/* Área do viewer com scroll interno */}
       <div className="min-h-0 flex-1">{renderBody()}</div>
-
-      {loadState === 'ready' && song ? (
-        <FontSizeControls
-          fontSize={fontSize}
-          onFontSizeChange={handleFontSizeChange}
-          className="mt-2 shrink-0"
-        />
-      ) : null}
     </div>
   )
 }

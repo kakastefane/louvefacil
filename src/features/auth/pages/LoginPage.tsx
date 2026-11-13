@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/hooks/useAuth'
-import { friendlyErrorMessage } from '@/lib/utils'
+import { friendlyErrorMessage, isOnline } from '@/lib/utils'
 
 type AuthTab = 'entrar' | 'criar'
 
@@ -56,6 +56,7 @@ function resolveRedirect(raw: string | null): string {
 const signInSchema = z.object({
   email: z
     .string()
+    .trim()
     .min(1, 'Informe seu e-mail.')
     .email('Informe um e-mail válido.'),
   password: z.string().min(1, 'Informe sua senha.'),
@@ -65,10 +66,12 @@ type SignInValues = z.infer<typeof signInSchema>
 const signUpSchema = z.object({
   name: z
     .string()
+    .trim()
     .min(1, 'Informe seu nome.')
     .max(60, 'O nome deve ter no máximo 60 caracteres.'),
   email: z
     .string()
+    .trim()
     .min(1, 'Informe seu e-mail.')
     .email('Informe um e-mail válido.'),
   password: z.string().min(8, 'A senha deve ter pelo menos 8 caracteres.'),
@@ -107,6 +110,10 @@ function SignInForm({ target }: { target: string }) {
 
   const onSubmit = handleSubmit(async (values) => {
     setError(null)
+    if (!isOnline()) {
+      setError('Sem conexão — entrar exige internet. Tente novamente quando estiver online.')
+      return
+    }
     try {
       await signIn(values.email.trim(), values.password)
       navigate(target, { replace: true })
@@ -177,6 +184,10 @@ function SignUpForm({
 
   const onSubmit = handleSubmit(async (values) => {
     setError(null)
+    if (!isOnline()) {
+      setError('Sem conexão — criar conta exige internet. Tente novamente quando estiver online.')
+      return
+    }
     try {
       const { needsConfirmation } = await signUp(
         values.email.trim(),

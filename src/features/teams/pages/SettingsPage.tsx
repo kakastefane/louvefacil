@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { Check, Copy, LogOut, Plus, Trash2 } from 'lucide-react'
+import { Check, Copy, Loader2, LogOut, Plus, Trash2 } from 'lucide-react'
 
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states'
 import { Badge } from '@/components/ui/badge'
@@ -351,13 +351,20 @@ export function SettingsPage() {
                 onChange={(event) => setDisplayName(event.target.value)}
                 disabled={savingName}
                 placeholder="Como você aparece para a equipe"
-                maxLength={40}
+                maxLength={80}
               />
               <Button
                 onClick={() => void handleSaveName()}
                 disabled={savingName || nameUnchanged}
               >
-                Salvar
+                {savingName ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Salvando…
+                  </>
+                ) : (
+                  'Salvar'
+                )}
               </Button>
             </div>
             {nameFeedback ? (
@@ -384,6 +391,12 @@ export function SettingsPage() {
           {membersLoading && members === null ? <LoadingState /> : null}
           {membersError ? (
             <ErrorState message={membersError} onRetry={() => void loadMembers()} />
+          ) : null}
+          {members !== null && members.length === 0 ? (
+            <p className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
+              Nenhum membro além de você ainda — convide novas pessoas na seção
+              de convites.
+            </p>
           ) : null}
           {members?.map((member) => {
             const isSelf = member.id === activeMember.id
@@ -476,7 +489,16 @@ export function SettingsPage() {
                 onClick={() => void handleGenerateInvite()}
                 disabled={generatingInvite}
               >
-                <Plus /> Gerar convite
+                {generatingInvite ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Gerando…
+                  </>
+                ) : (
+                  <>
+                    <Plus /> Gerar convite
+                  </>
+                )}
               </Button>
             </div>
 
@@ -620,7 +642,14 @@ export function SettingsPage() {
               onClick={() => void handleRemoveMember()}
               disabled={removingMember}
             >
-              Remover
+              {removingMember ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Removendo…
+                </>
+              ) : (
+                'Remover'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -657,7 +686,14 @@ export function SettingsPage() {
               onClick={() => void handleRevokeInvite()}
               disabled={revokingInvite}
             >
-              Revogar
+              {revokingInvite ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Revogando…
+                </>
+              ) : (
+                'Revogar'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -683,7 +719,14 @@ export function SettingsPage() {
               onClick={() => void handleLeaveTeam()}
               disabled={leaving}
             >
-              Sair da equipe
+              {leaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saindo…
+                </>
+              ) : (
+                'Sair da equipe'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -711,7 +754,14 @@ export function SettingsPage() {
               onClick={() => void handleLogout()}
               disabled={loggingOut}
             >
-              Encerrar sessão
+              {loggingOut ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Encerrando…
+                </>
+              ) : (
+                'Encerrar sessão'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

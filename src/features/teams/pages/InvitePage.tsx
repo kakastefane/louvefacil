@@ -202,7 +202,9 @@ export function InvitePage() {
                   maxLength={80}
                   autoComplete="name"
                   disabled={nameForm.formState.isSubmitting}
-                  {...nameForm.register('displayName')}
+                  {...nameForm.register('displayName', {
+                    onChange: () => setFormError(''),
+                  })}
                 />
                 {nameForm.formState.errors.displayName ? (
                   <p className="text-sm text-destructive">

@@ -22,7 +22,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/hooks/useAuth'
-import { friendlyErrorMessage } from '@/lib/utils'
+import { friendlyErrorMessage, isOnline } from '@/lib/utils'
 
 /** Mapeia erros do Supabase Auth para mensagens PT-BR amigáveis. */
 function authErrorMessage(error: unknown): string {
@@ -48,6 +48,7 @@ function authErrorMessage(error: unknown): string {
 const requestResetSchema = z.object({
   email: z
     .string()
+    .trim()
     .min(1, 'Informe seu e-mail.')
     .email('Informe um e-mail válido.'),
 })
@@ -111,6 +112,10 @@ function RequestResetForm() {
 
   const onSubmit = handleSubmit(async (values) => {
     setError(null)
+    if (!isOnline()) {
+      setError('Sem conexão — enviar o e-mail exige internet. Tente novamente quando estiver online.')
+      return
+    }
     try {
       await requestPasswordReset(values.email.trim())
       setSent(true)
@@ -208,6 +213,10 @@ function NewPasswordForm({
 
   const onSubmit = handleSubmit(async (values) => {
     setError(null)
+    if (!isOnline()) {
+      setError('Sem conexão — salvar a nova senha exige internet. Tente novamente quando estiver online.')
+      return
+    }
     try {
       await updatePassword(values.password)
       setUpdated(true)

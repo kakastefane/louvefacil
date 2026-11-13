@@ -81,15 +81,15 @@ quickstart.md S1/S1b
 
 ### Implementation for User Story 1
 
-- [ ] T020 [P] [US1] Criar service de equipes `src/features/teams/service.ts`: criar equipe via RPC `create_team(name, display_name)` (equipe + vínculo owner atômicos no banco), listar equipes do usuário (read-through), equipe ativa persistida em localStorage
-- [ ] T021 [P] [US1] Criar service de convites `src/features/teams/invites.ts`: gerar (code + expires_at default 7 dias), listar por equipe, revogar; ingresso via RPC `join_team_with_code(code, display_name)`; mapear erros `invalid_code/expired_code/revoked_code`
-- [ ] T022 [P] [US1] Criar service de membros `src/features/teams/members.ts`: listar membros da equipe (read-through), alterar papel e remover via RPCs, `leave_team`
-- [ ] T023 [US1] Criar páginas de autenticação `src/features/auth/pages/LoginPage.tsx` (alternância entrar/criar conta, react-hook-form + zod, erros PT-BR, redirect preservado) e `src/features/auth/pages/RecoverPasswordPage.tsx` (solicitar por e-mail + definir nova senha com token)
-- [ ] T024 [US1] Criar `src/features/teams/pages/TeamsPage.tsx` (`/equipes`): lista de minhas equipes, criar equipe (nome), estado vazio com CTA criar/entrar via convite; define equipe ativa → `/biblioteca`
-- [ ] T025 [US1] Criar `src/features/teams/pages/InvitePage.tsx` (`/convite/:code`): válido+sem sessão → cadastro/entrada com code preservado; válido+com sessão → entrar direto; inválido/expirado/revogado → mensagem com CTA contactar o dono
-- [ ] T026 [US1] Criar `src/features/teams/pages/SettingsPage.tsx` (`/config`): perfil (editar display_name), gerenciar membros (alterar papel, remover — só dono), convites (gerar com prazo, copiar link, revogar — só dono), sair da equipe (não-dono) e logout
-- [ ] T027 [US1] Integrar seletor de equipe no AppShell (`src/components/layout/TeamSwitcher.tsx`): troca de equipe ativa, exibição do papel do usuário, limpeza de caches de conteúdo ao trocar; restrições de papéis visíveis na UI (membro não vê botões de escrita)
-- [ ] T028 [US1] Adicionar validação e tratamento de erro amigável nos fluxos US1 (e-mail já cadastrado, senha fraca, RLS negada → "Você não tem permissão") + empty/loading states
+- [x] T020 [P] [US1] Criar service de equipes `src/features/teams/service.ts`: criar equipe via RPC `create_team(name, display_name)` (equipe + vínculo owner atômicos no banco), listar equipes do usuário (read-through), equipe ativa persistida em localStorage
+- [x] T021 [P] [US1] Criar service de convites `src/features/teams/invites.ts`: gerar (code + expires_at default 7 dias), listar por equipe, revogar; ingresso via RPC `join_team_with_code(code, display_name)`; mapear erros `invalid_code/expired_code/revoked_code`
+- [x] T022 [P] [US1] Criar service de membros `src/features/teams/members.ts`: listar membros da equipe (read-through), alterar papel e remover via RPCs, `leave_team`
+- [x] T023 [US1] Criar páginas de autenticação `src/features/auth/pages/LoginPage.tsx` (alternância entrar/criar conta, react-hook-form + zod, erros PT-BR, redirect preservado) e `src/features/auth/pages/RecoverPasswordPage.tsx` (solicitar por e-mail + definir nova senha com token)
+- [x] T024 [US1] Criar `src/features/teams/pages/TeamsPage.tsx` (`/equipes`): lista de minhas equipes, criar equipe (nome), estado vazio com CTA criar/entrar via convite; define equipe ativa → `/biblioteca`
+- [x] T025 [US1] Criar `src/features/teams/pages/InvitePage.tsx` (`/convite/:code`): válido+sem sessão → cadastro/entrada com code preservado; válido+com sessão → entrar direto; inválido/expirado/revogado → mensagem com CTA contactar o dono
+- [x] T026 [US1] Criar `src/features/teams/pages/SettingsPage.tsx` (`/config`): perfil (editar display_name), gerenciar membros (alterar papel, remover — só dono), convites (gerar com prazo, copiar link, revogar — só dono), sair da equipe (não-dono) e logout
+- [x] T027 [US1] Integrar seletor de equipe no AppShell (`src/components/layout/TeamSwitcher.tsx`): troca de equipe ativa, exibição do papel do usuário, limpeza de caches de conteúdo ao trocar; restrições de papéis visíveis na UI (membro não vê botões de escrita)
+- [x] T028 [US1] Adicionar validação e tratamento de erro amigável nos fluxos US1 (e-mail já cadastrado, senha fraca, RLS negada → "Você não tem permissão") + empty/loading states
 
 **Checkpoint**: US1 funcional e testável isoladamente (quickstart S1 + S1b)
 

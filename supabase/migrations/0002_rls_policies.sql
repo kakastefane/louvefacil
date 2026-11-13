@@ -475,7 +475,7 @@ $$;
 -- ------------------------------------------------------------
 -- Execução das RPCs apenas para autenticados
 -- ------------------------------------------------------------
-revoke execute on function public.create_team(uuid, text) from public, anon;
+revoke execute on function public.create_team(text, text) from public, anon;
 revoke execute on function public.join_team_with_code(text, text) from public, anon;
 revoke execute on function public.update_member_role(uuid, text) from public, anon;
 revoke execute on function public.remove_member(uuid) from public, anon;
@@ -483,7 +483,7 @@ revoke execute on function public.leave_team(uuid) from public, anon;
 revoke execute on function public.reorder_setlist(uuid, uuid[]) from public, anon;
 revoke execute on function public.duplicate_setlist(uuid, text) from public, anon;
 
-grant execute on function public.create_team(uuid, text) to authenticated;
+grant execute on function public.create_team(text, text) to authenticated;
 grant execute on function public.join_team_with_code(text, text) to authenticated;
 grant execute on function public.update_member_role(uuid, text) to authenticated;
 grant execute on function public.remove_member(uuid) to authenticated;

@@ -57,6 +57,40 @@ select * from songs;          -- só linhas de equipes do usuário (ou 0)
 select * from invites;        -- só convites de equipes onde é dono (ou 0)
 ```
 
+#### Revisão estática de RLS/RPCs (T053, 2026-11-13)
+
+Revisão de `supabase/migrations/0002_rls_policies.sql` contra a matriz do
+`data-model.md`:
+
+- **RLS habilitado nas 6 tabelas** (teams, team_members, invites, songs,
+  setlists, setlist_items). ✔
+- **teams**: SELECT por membro; UPDATE/DELETE por dono; **sem política de
+  INSERT** (criação só via RPC `create_team`). ✔
+- **team_members**: SELECT por membro; **sem INSERT/UPDATE/DELETE diretos**
+  (gestão só via RPCs `update_member_role`/`remove_member`/`leave_team`);
+  `join_team_with_code` é o único caminho de ingresso. ✔
+- **invites**: SELECT/INSERT/UPDATE/DELETE só pelo dono — convite é segredo,
+  membro comum não consegue ler códigos. ✔
+- **songs/setlists**: SELECT por membro; INSERT/UPDATE/DELETE por
+  editor/dono (insert exige `created_by = auth.uid()`). ✔
+- **setlist_items**: acesso via papel na equipe do setlist pai. ✔
+- **RPCs**: todas com `security definer`, `set search_path = public`,
+  validação interna (`auth.uid()`, papel na equipe, limites de nome,
+  `items_mismatch`/`item_not_in_setlist`), `execute` revogado de
+  `public`/`anon` e liberado só para `authenticated`. ✔
+- **Achado (corrigido)**: o `revoke`/`grant` de `reorder`/`create_team` usava
+  assinatura inexistente `create_team(uuid, text)`; o correto é
+  `create_team(text, text)` (p_name text, p_display_name text). Sem a correção,
+  a execução do 0002 abortava nesse ponto e o `create_team` ficava com
+  EXECUTE padrão (PUBLIC). Corrigido no próprio 0002.
+- **Índice `team_members_single_owner`** garante no máximo um dono por equipe. ✔
+- **Ordem das migrations**: 0001 antes de 0002 (helpers/RPCs referenciam as
+  tabelas). O 0002 e idempotente (drop policy if exists / create or replace).
+
+Pendência (fora do escopo estático): validar no Supabase real que as RPCs
+rejeitam chamadas anônimas e que a matriz acima se cumpre com dois usuários
+de verdade (S1 completo).
+
 ### S2 — Editor com preview (US2 / SC-004)
 
 1. Como editor/dono: `/cifra/nova` → cole uma cifra com `[Am]` inline e
@@ -104,3 +138,27 @@ select * from invites;        -- só convites de equipes onde é dono (ou 0)
 Todos os cenários S1–S5 passam no ambiente implantado + `npm test` verde +
 lint limpo (`npm run lint`) + duas equipes sem qualquer vazamento cruzado
 (SC-003).
+
+## 6. Evidências de validação automática (T054, 2026-11-13)
+
+Executado no repositório (Node 26, Linux), sem credenciais Supabase:
+
+- `npm run lint` — **limpo** (zero erros).
+- `npm test` — **129/129 testes passando** (8 arquivos: parser, transpõe,
+  render, temas, filter, posições, limites de desvio…).
+- `npm run build` — **verde**; PWA gerado (`precache 18 entries`,
+  `dist/sw.js` + `workbox-*.js`).
+- `npm run icons` — declarado e disponível; ícones PNGs presentes em
+  `public/icons/` (192/512/maskable/apple-touch).
+- Artefatos do roteiro conferidos: migrations 0001/0002,
+  `supabase/seed_sample_songs.sql`, `.env.example` (modo /setup sem
+  credenciais), `netlify.toml` (SPA fallback + cache headers), README.
+- Revisão estática de RLS/RPCs (seção S1b) — 1 achado corrigido.
+- Rotas `/biblioteca`, `/cifra/*`, `/setlists`, `/setlist/:id`,
+  `/setlist/:id/tocar` cabeados com guards de papel; UI esconde controles
+  de escrita para membros (FR-029); bloqueio efetivo é do RLS.
+
+**Não automatizável aqui** (exige projeto Supabase real + deploy):
+S1 (duas equipes/convites), S1b (negativa via SQL), S2–S5 (preview, offline
+real), PWA instalado (Chrome/iOS). Esses passos ficam com o dono do projeto
+no domínio publicado. Nenhuma informação foi simulada como executada.

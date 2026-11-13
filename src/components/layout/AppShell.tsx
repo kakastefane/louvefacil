@@ -19,6 +19,13 @@ const NAV_ITEMS = [
 export function AppShell({ children }: { children?: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col md:flex-row">
+      {/* Skip link: primeiro elemento focável, visível apenas com foco */}
+      <a
+        href="#conteudo-principal"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
+      >
+        Pular para o conteúdo
+      </a>
       {/* Cabeçalho (mobile) / lateral (desktop) */}
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur md:hidden">
         <div className="flex items-center justify-between px-4 py-2">
@@ -35,7 +42,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
         <div className="px-3 pb-2">
           <TeamSwitcher />
         </div>
-        <nav className="flex flex-col gap-1 px-3">
+        <nav aria-label="Navegação principal" className="flex flex-col gap-1 px-3">
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -59,14 +66,14 @@ export function AppShell({ children }: { children?: ReactNode }) {
         </div>
       </aside>
 
-      <main className="flex-1 pb-20 md:pb-0">
+      <main id="conteudo-principal" tabIndex={-1} className="flex-1 pb-20 md:pb-0">
         <div className="mx-auto w-full max-w-3xl px-4 py-4 md:py-6">
           {children ?? <Outlet />}
         </div>
       </main>
 
       {/* Navegação inferior (mobile) */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t bg-background/95 backdrop-blur md:hidden">
+      <nav aria-label="Navegação inferior" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t bg-background/95 backdrop-blur md:hidden">
         {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}

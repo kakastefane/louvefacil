@@ -196,12 +196,12 @@ preserva texto. Roteiro em quickstart.md S5
 
 **Purpose**: Refinamentos que afetam todas as histórias
 
-- [ ] T050 Criar `README.md` na raiz: visão, setup (Supabase passo a passo, env vars, migrações), scripts, deploy Vercel/Netlify, link para quickstart.md e arquitetura em `.docs/`
-- [ ] T051 [P] Criar `supabase/seed_sample_songs.sql` (opcional): 3–4 cifras de exemplo em ChordPro com temas, para testes manuais rápidos
-- [ ] T052 [P] Pass de acessibilidade/UX: labels e aria em dialogs/forms (shadcn), foco visível, navegação por teclado no modo tocar e no dnd-kit, contraste nos dois temas
-- [ ] T053 Revisão de segurança final: reler `supabase/migrations/0002_rls_policies.sql` contra a matriz do data-model.md (Princípio I da constituição), conferir RPCs (search_path fixo, validação de papel) e anotar resultado no quickstart S1b
-- [ ] T054 Executar validação completa: `npm run lint` + `npm test` + `npm run build` verdes; percorrer `specs/001-louve-facil-mvp/quickstart.md` S1–S5 e registrar evidências
-- [ ] T055 Limpeza final: remover TODOs/debug, revisar textos PT-BR (Princípio VI), conferir commits pequenos e descritivos (convenções da constituição)
+- [x] T050 Criar `README.md` na raiz: visão, setup (Supabase passo a passo, env vars, migrações), scripts, deploy Vercel/Netlify, link para quickstart.md e arquitetura em `.docs/`
+- [x] T051 [P] Criar `supabase/seed_sample_songs.sql` (opcional): 3–4 cifras de exemplo em ChordPro com temas, para testes manuais rápidos
+- [x] T052 [P] Pass de acessibilidade/UX: labels e aria em dialogs/forms (shadcn), foco visível, navegação por teclado no modo tocar e no dnd-kit, contraste nos dois temas
+- [x] T053 Revisão de segurança final: reler `supabase/migrations/0002_rls_policies.sql` contra a matriz do data-model.md (Princípio I da constituição), conferir RPCs (search_path fixo, validação de papel) e anotar resultado no quickstart S1b
+- [x] T054 Executar validação completa: `npm run lint` + `npm test` + `npm run build` verdes; percorrer `specs/001-louve-facil-mvp/quickstart.md` S1–S5 e registrar evidências
+- [x] T055 Limpeza final: remover TODOs/debug, revisar textos PT-BR (Princípio VI), conferir commits pequenos e descritivos (convenções da constituição)
 
 ---
 

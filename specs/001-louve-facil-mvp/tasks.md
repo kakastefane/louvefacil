@@ -116,7 +116,7 @@ bloqueia; cifra salva aparece na biblioteca e é editável/excluível
 - [x] T031 [US2] Criar componente `src/features/songs/components/ChordPreview.tsx`: parse + render (T011/T013) com debounce de digitação, scroll sincronizado, seção/estilo dos rótulos
 - [x] T032 [US2] Criar `src/features/songs/components/SongEditorForm.tsx`: campos título/artista/original_key (select de notas)/themes (tag input)/content (textarea mono com autocomplete de colchetes), validação zod (title 1–200, content obrigatório ≤20000), mensagens PT-BR
 - [x] T033 [US2] Criar páginas de edição: `src/features/songs/pages/SongEditorPage.tsx` (`/cifra/nova`) e modo edição (`/cifra/:id/editar`): layout editor+preview (lateral no desktop ≥lg, alternância por abas no mobile), guarda RequireRole editor/dono, estados de salvamento/erro de rede com texto preservado
-- [ ] T034 [US2] Adicionar exclusão de cifra com dialog de confirmação (avisa remoção de setlists) integrada à página de edição e à biblioteca (US3)
+- [x] T034 [US2] Adicionar exclusão de cifra com dialog de confirmação (avisa remoção de setlists) integrada à página de edição e à biblioteca (US3)
 
 **Checkpoint**: US1 + US2 funcionam independentemente (quickstart S2)
 
@@ -138,9 +138,9 @@ transpõe ±N com acordes legíveis (bemóis em tons de bemol); texto-fonte inta
 
 ### Implementation for User Story 3
 
-- [ ] T036 [US3] Criar `src/features/songs/pages/LibraryPage.tsx` (`/biblioteca`): lista com título/artista/tom/temas, input de busca com debounce, chips de tema, estado vazio (com CTA para editor/dono), abre `/cifra/:id`
-- [ ] T037 [US3] Criar `src/features/songs/pages/SongViewerPage.tsx` + `src/features/songs/components/SongViewer.tsx`: header (título/artista/tom exibido/temas), corpo renderizado por render.ts, aplicação de desvio de transposição apenas em memória (nunca salva na cifra)
-- [ ] T038 [US3] Criar `src/features/songs/components/ViewerControls.tsx`: transposição +/− com indicador (`+2`/`0`/`−1`, reset), tamanho da fonte em passos discretos persistido localmente, respeita tema claro/escuro vigente (FR-021/FR-022/FR-023)
+- [x] T036 [US3] Criar `src/features/songs/pages/LibraryPage.tsx` (`/biblioteca`): lista com título/artista/tom/temas, input de busca com debounce, chips de tema, estado vazio (com CTA para editor/dono), abre `/cifra/:id`
+- [x] T037 [US3] Criar `src/features/songs/pages/SongViewerPage.tsx` + `src/features/songs/components/SongViewer.tsx`: header (título/artista/tom exibido/temas), corpo renderizado por render.ts, aplicação de desvio de transposição apenas em memória (nunca salva na cifra)
+- [x] T038 [US3] Criar `src/features/songs/components/ViewerControls.tsx`: transposição +/− com indicador (`+2`/`0`/`−1`, reset), tamanho da fonte em passos discretos persistido localmente, respeita tema claro/escuro vigente (FR-021/FR-022/FR-023)
 
 **Checkpoint**: US1–US3 funcionam (quickstart S3) — corresponde ao "Núcleo" da arquitetura
 

@@ -108,14 +108,14 @@ bloqueia; cifra salva aparece na biblioteca e é editável/excluível
 
 ### Tests for User Story 2
 
-- [ ] T029 [P] [US2] Testes de unidade da normalização de temas (trim, dedupe case-insensitive, agrupamento) em `tests/unit/songs/themes.test.ts` (usa `src/lib/utils.ts`)
+- [x] T029 [P] [US2] Testes de unidade da normalização de temas (trim, dedupe case-insensitive, agrupamento) em `tests/unit/songs/themes.test.ts` (usa `src/lib/utils.ts`)
 
 ### Implementation for User Story 2
 
-- [ ] T030 [P] [US2] Criar service de cifras `src/features/songs/service.ts`: listar por equipe (ordenado por título), obter por id, criar (created_by = auth.uid()), atualizar, excluir (confirmação na UI; cascata remove itens de setlists) — tudo read-through via `src/db/repos/songs.ts`
-- [ ] T031 [US2] Criar componente `src/features/songs/components/ChordPreview.tsx`: parse + render (T011/T013) com debounce de digitação, scroll sincronizado, seção/estilo dos rótulos
-- [ ] T032 [US2] Criar `src/features/songs/components/SongEditorForm.tsx`: campos título/artista/original_key (select de notas)/themes (tag input)/content (textarea mono com autocomplete de colchetes), validação zod (title 1–200, content obrigatório ≤20000), mensagens PT-BR
-- [ ] T033 [US2] Criar páginas de edição: `src/features/songs/pages/SongEditorPage.tsx` (`/cifra/nova`) e modo edição (`/cifra/:id/editar`): layout editor+preview (lateral no desktop ≥lg, alternância por abas no mobile), guarda RequireRole editor/dono, estados de salvamento/erro de rede com texto preservado
+- [x] T030 [P] [US2] Criar service de cifras `src/features/songs/service.ts`: listar por equipe (ordenado por título), obter por id, criar (created_by = auth.uid()), atualizar, excluir (confirmação na UI; cascata remove itens de setlists) — tudo read-through via `src/db/repos/songs.ts`
+- [x] T031 [US2] Criar componente `src/features/songs/components/ChordPreview.tsx`: parse + render (T011/T013) com debounce de digitação, scroll sincronizado, seção/estilo dos rótulos
+- [x] T032 [US2] Criar `src/features/songs/components/SongEditorForm.tsx`: campos título/artista/original_key (select de notas)/themes (tag input)/content (textarea mono com autocomplete de colchetes), validação zod (title 1–200, content obrigatório ≤20000), mensagens PT-BR
+- [x] T033 [US2] Criar páginas de edição: `src/features/songs/pages/SongEditorPage.tsx` (`/cifra/nova`) e modo edição (`/cifra/:id/editar`): layout editor+preview (lateral no desktop ≥lg, alternância por abas no mobile), guarda RequireRole editor/dono, estados de salvamento/erro de rede com texto preservado
 - [ ] T034 [US2] Adicionar exclusão de cifra com dialog de confirmação (avisa remoção de setlists) integrada à página de edição e à biblioteca (US3)
 
 **Checkpoint**: US1 + US2 funcionam independentemente (quickstart S2)

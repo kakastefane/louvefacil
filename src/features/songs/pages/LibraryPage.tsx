@@ -172,8 +172,6 @@ export function LibraryPage() {
     return (
       <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {visibleSongs.map((song) => {
-          const visibleThemes = song.themes.slice(0, 3)
-          const extraThemes = song.themes.length - visibleThemes.length
           return (
             <li key={song.id}>
               <Card className="flex h-full items-stretch overflow-hidden">
@@ -191,19 +189,23 @@ export function LibraryPage() {
                       {song.artist}
                     </span>
                   ) : null}
-                  <span className="mt-3 flex flex-wrap items-center gap-1.5">
-                    {song.original_key ? (
-                      <Badge variant="outline">Tom: {song.original_key}</Badge>
-                    ) : null}
-                    {visibleThemes.map((theme) => (
-                      <Badge key={themeKey(theme)} variant="secondary">
-                        {theme}
-                      </Badge>
-                    ))}
-                    {extraThemes > 0 ? (
-                      <Badge variant="secondary">+{extraThemes}</Badge>
-                    ) : null}
-                  </span>
+                  {song.original_key || song.bpm !== null || song.time_signature ? (
+                    <span className="mt-3 flex flex-wrap items-center gap-1.5" aria-label="Tom, andamento e compasso">
+                      {song.original_key ? (
+                        <Badge variant="outline">Tom: {song.original_key}</Badge>
+                      ) : null}
+                      {song.bpm !== null ? (
+                        <Badge variant="outline" aria-label={`Andamento de ${song.bpm} BPM`}>
+                          ♩ = {song.bpm}
+                        </Badge>
+                      ) : null}
+                      {song.time_signature ? (
+                        <Badge variant="outline" aria-label={`Compasso ${song.time_signature}`}>
+                          {song.time_signature}
+                        </Badge>
+                      ) : null}
+                    </span>
+                  ) : null}
                 </button>
                 {editable ? (
                   <div className="flex flex-col items-center gap-1 self-stretch border-l p-2">

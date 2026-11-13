@@ -98,12 +98,13 @@ create table if not exists public.setlist_items (
   unique (setlist_id, song_id)
 );
 
--- ordem única, adiada para permitir reordenação atômica em transação
-create unique index if not exists setlist_items_position_uniq
-  on public.setlist_items (setlist_id, position) deferrable initially deferred;
-
-create index if not exists setlist_items_setlist_pos_idx
-  on public.setlist_items (setlist_id, position);
+-- ordem única por setlist, adiável para permitir reordenação atômica em transação.
+-- Postgres não admite DEFERRABLE em CREATE UNIQUE INDEX — só em CONSTRAINT.
+alter table public.setlist_items
+  drop constraint if exists setlist_items_position_uniq;
+alter table public.setlist_items
+  add constraint setlist_items_position_uniq
+  unique (setlist_id, position) deferrable initially deferred;
 
 -- ------------------------------------------------------------
 -- trigger updated_at (songs, setlists)

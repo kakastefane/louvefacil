@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { Loader2, Music, Plus, Search, SearchX, Trash2 } from 'lucide-react'
+import { Loader2, Music, Pencil, Plus, Search, SearchX, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -206,7 +206,15 @@ export function LibraryPage() {
                   </span>
                 </button>
                 {editable ? (
-                  <div className="flex items-start border-l p-2">
+                  <div className="flex flex-col items-center gap-1 self-stretch border-l p-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => navigate(`/cifra/${song.id}/editar`)}
+                      aria-label={`Editar cifra ${song.title}`}
+                    >
+                      <Pencil aria-hidden />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"

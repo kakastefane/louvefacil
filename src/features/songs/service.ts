@@ -30,10 +30,25 @@ async function currentUserId(): Promise<string | null> {
 /** Tom aceito pelo banco (check da migração 0001): raiz A–G com acidente opcional. */
 const ORIGINAL_KEY_PATTERN = /^[A-G][#b]?$/
 
-/** Limites do banco (checks da migração 0001). */
+/** Limites do banco (checks da migração 0001/0003). */
 const TITLE_MAX = 200
 const ARTIST_MAX = 200
 const CONTENT_MAX = 20000
+const BPM_MIN = 20
+const BPM_MAX = 400
+const TIME_SIGNATURE_PATTERN = /^[0-9]{1,2}\/[0-9]{1,2}$/
+const VALID_METERS = new Set([
+  '2/4',
+  '3/4',
+  '4/4',
+  '5/4',
+  '6/4',
+  '6/8',
+  '7/8',
+  '9/8',
+  '12/8',
+  '2/2',
+])
 
 /**
  * Traduz os erros do banco/RLS para PT-BR (mesmo padrão de
@@ -61,6 +76,18 @@ function translateSongError(error: unknown): Error {
     )
   if (raw.includes('songs_content_check'))
     return new Error('A cifra deve ter entre 1 e 20.000 caracteres.')
+  if (raw.includes('songs_bpm_check'))
+    return new Error(`O BPM deve ser um número entre ${BPM_MIN} e ${BPM_MAX}.`)
+  if (raw.includes('songs_time_signature_check'))
+    return new Error('Fórmula de compasso inválida — use algo como 4/4, 3/4 ou 6/8.')
+  // coluna ainda não existe no projeto (migração 0003 não executada)
+  if (
+    /column/i.test(raw) &&
+    (raw.includes('bpm') || raw.includes('time_signature'))
+  )
+    return new Error(
+      'O banco ainda não tem as colunas de BPM/compasso. Execute a migração 0003_bpm_meter.sql no Supabase (SQL Editor).',
+    )
 
   // offline_write / rede / demais erros: mapeamento central em PT-BR
   return new Error(friendlyErrorMessage(error))
@@ -93,11 +120,26 @@ function validateAndNormalizeDraft(draft: SongDraft): SongDraft {
   if (content.length > CONTENT_MAX)
     throw new Error('A cifra deve ter entre 1 e 20.000 caracteres.')
 
+  // BPM: inteiro entre 20 e 400 (opcional; check da migração 0003)
+  const bpm = draft.bpm == null ? null : Math.trunc(draft.bpm)
+  if (bpm !== null && (!Number.isFinite(bpm) || bpm < BPM_MIN || bpm > BPM_MAX))
+    throw new Error(`O BPM deve ser um número entre ${BPM_MIN} e ${BPM_MAX}.`)
+
+  // Compasso: formato "n/d" e apenas fórmulas conhecidas (opcional)
+  const timeSignature = draft.time_signature?.trim() || null
+  if (
+    timeSignature &&
+    (!TIME_SIGNATURE_PATTERN.test(timeSignature) || !VALID_METERS.has(timeSignature))
+  )
+    throw new Error('Fórmula de compasso inválida — use algo como 4/4, 3/4 ou 6/8.')
+
   // temas: trim, remove vazios/duplicatas (case-insensitive) — FR-018
   return {
     title,
     artist: artist || null,
     original_key: original_key || null,
+    bpm,
+    time_signature: timeSignature,
     themes: normalizeThemes(draft.themes),
     content,
   }

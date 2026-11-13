@@ -84,6 +84,8 @@ revogado** (pelo dono) ou **ativo → expirado** (tempo). Consumo só via RPC
 | title | text not null | 1–200 caracteres |
 | artist | text null | ≤ 200 |
 | original_key | text null | tom de referência; formato `A–G` + opcional `#`/`b` (ex. `G`, `Bb`) |
+| bpm | int null | andamento (migração `0003`); 20–400 |
+| time_signature | text null | fórmula de compasso (migração `0003`); formato `n/d` (ex. `4/4`, `6/8`) |
 | themes | text[] not null | default `{}`; etiquetas livres; normalização canônica no app (trim, sem duplicatas case-insensitive) |
 | content | text not null | cifra ChordPro (contrato em [contracts/chordpro-format.md](./contracts/chordpro-format.md)); ≤ 20.000 caracteres |
 | created_by | uuid not null → auth.users | |

@@ -62,6 +62,8 @@ export async function createSong(
     title: draft.title.trim(),
     artist: draft.artist?.trim() || null,
     original_key: draft.original_key || null,
+    bpm: draft.bpm,
+    time_signature: draft.time_signature,
     themes: normalizeThemes(draft.themes),
     content: draft.content,
   }
@@ -86,6 +88,8 @@ export async function updateSong(
     title: draft.title.trim(),
     artist: draft.artist?.trim() || null,
     original_key: draft.original_key || null,
+    bpm: draft.bpm,
+    time_signature: draft.time_signature,
     themes: normalizeThemes(draft.themes),
     content: draft.content,
   }

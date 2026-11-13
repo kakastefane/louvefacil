@@ -114,3 +114,26 @@ describe('isChordToken', () => {
     },
   )
 })
+
+describe('tag de seção {section: …}', () => {
+  it('metatag {section: Intro} vira linha de seção', () => {
+    const parsed = parseChordPro('{section: Intro}\n[G]letra')
+    expect(parsed.lines[0]).toEqual({
+      type: 'section',
+      label: 'Intro',
+      chords: [],
+    })
+  })
+
+  it('aceita aliases {sec} e {seção}/{secao}, case-insensitive', () => {
+    for (const tag of ['{sec: Verso 1}', '{seção: Refrão}', '{SECAO: Ponte}', '{SECTION: Chorus}']) {
+      const parsed = parseChordPro(`${tag}\n[G]letra`)
+      expect(parsed.lines[0]).toMatchObject({ type: 'section' })
+    }
+  })
+
+  it('ignora tag de seção vazia', () => {
+    const parsed = parseChordPro('{section: }\n[G]letra')
+    expect(parsed.lines[0]).toMatchObject({ type: 'lyric' })
+  })
+})

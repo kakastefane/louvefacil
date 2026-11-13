@@ -57,11 +57,35 @@ type EditorTab = 'edit' | 'preview'
  * "Preview" via CSS — a coluna do preview continua montada, então a digitação
  * e a prévia nunca desmontam e o rascunho jamais se perde ao trocar de aba.
  */
+/** Chave do rascunho desta cifra no localStorage (fora da sessão do form). */
+function songDraftKey(id: string | undefined): string {
+  return `louve-facil:song-draft:${id ?? 'new'}`
+}
+
+/** Lê o rascunho salvo (se houver) — leitura síncrona antes da montagem do form. */
+function loadDraft(key: string): Partial<SongEditorFormValues> | undefined {
+  try {
+    const raw = localStorage.getItem(key)
+    if (!raw) return undefined
+    const parsed = JSON.parse(raw) as Partial<SongEditorFormValues>
+    return typeof parsed === 'object' && parsed !== null ? parsed : undefined
+  } catch {
+    return undefined
+  }
+}
+
 function SongEditorContent() {
   const { id } = useParams<{ id: string }>()
   const isEdit = id !== undefined
   const navigate = useNavigate()
   const { activeTeam } = useTeam()
+
+  // Rascunho local: restaura o que foi digitado se a aba foi recarregada
+  const draftKey = songDraftKey(id)
+  const [restoredDraft, setRestoredDraft] = useState<Partial<SongEditorFormValues> | undefined>(
+    () => loadDraft(draftKey),
+  )
+  const [draftNonce, setDraftNonce] = useState(0)
 
   const [song, setSong] = useState<Song | null>(null)
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'missing' | 'error'>(
@@ -108,6 +132,7 @@ function SongEditorContent() {
       } else {
         await createSong(activeTeam.id, draft)
       }
+      localStorage.removeItem(draftKey)
       navigate('/biblioteca')
     } catch (error) {
       // o texto digitado permanece no formulário — nada é limpo aqui
@@ -124,6 +149,7 @@ function SongEditorContent() {
     try {
       // o banco remove em cascata os itens desta cifra nas setlists
       await deleteSong(id)
+      localStorage.removeItem(draftKey)
       setDeleteOpen(false)
       navigate('/biblioteca')
     } catch (error) {
@@ -133,15 +159,28 @@ function SongEditorContent() {
     }
   }
 
-  const defaultValues: Partial<SongEditorFormValues> | undefined = song
+  // Rascunho restaurado tem prioridade sobre os dados salvos; descartar
+  // remonta o formulário com os valores do servidor.
+  const baseValues: Partial<SongEditorFormValues> | undefined = song
     ? {
         title: song.title,
         artist: song.artist ?? '',
         original_key: song.original_key,
+        bpm: song.bpm != null ? String(song.bpm) : '',
+        time_signature: song.time_signature,
         themes: song.themes,
         content: song.content,
       }
     : undefined
+  const defaultValues: Partial<SongEditorFormValues> | undefined = restoredDraft
+    ? { ...(baseValues ?? {}), ...restoredDraft }
+    : baseValues
+
+  function discardDraft() {
+    localStorage.removeItem(draftKey)
+    setRestoredDraft(undefined)
+    setDraftNonce((nonce) => nonce + 1)
+  }
 
   function renderBody() {
     if (isEdit && loadState === 'loading') {
@@ -186,6 +225,18 @@ function SongEditorContent() {
           </TabsList>
         </Tabs>
 
+        {restoredDraft ? (
+          <div
+            role="status"
+            className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400"
+          >
+            <span>Rascunho restaurado — você pode continuar de onde parou.</span>
+            <Button variant="outline" size="sm" onClick={discardDraft}>
+              Descartar rascunho
+            </Button>
+          </div>
+        ) : null}
+
         {/*
          * Esconde uma das colunas internas do SongEditorForm no mobile via CSS
          * (a coluna de campos é o 1º div do <form>, a de preview o último).
@@ -201,11 +252,13 @@ function SongEditorContent() {
           )}
         >
           <SongEditorForm
+            key={`${song?.id ?? 'nova'}:${draftNonce}`}
             defaultValues={defaultValues}
             onSubmit={handleSubmit}
             submitting={submitting}
             serverError={serverError}
             submitLabel={isEdit ? 'Salvar alterações' : 'Criar cifra'}
+            draftKey={draftKey}
           />
         </div>
       </>

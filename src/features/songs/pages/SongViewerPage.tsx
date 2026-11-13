@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Pencil } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states'
@@ -11,6 +11,8 @@ import {
   saveViewerFontSize,
 } from '@/features/songs/components/ViewerControls'
 import { getSongById } from '@/features/songs/service'
+import { useTeam } from '@/features/teams/TeamContext'
+import { canEdit } from '@/types/domain'
 import type { Song } from '@/types/domain'
 
 type LoadState = 'loading' | 'ready' | 'missing' | 'error'
@@ -23,6 +25,8 @@ type LoadState = 'loading' | 'ready' | 'missing' | 'error'
  */
 export function SongViewerPage() {
   const { id } = useParams<{ id: string }>()
+  const { activeMember } = useTeam()
+  const editable = activeMember ? canEdit(activeMember.role) : false
 
   const [song, setSong] = useState<Song | null>(null)
   const [loadState, setLoadState] = useState<LoadState>('loading')
@@ -96,7 +100,7 @@ export function SongViewerPage() {
 
   return (
     <div className="flex h-full min-h-[60vh] flex-col">
-      <header className="mb-2 shrink-0">
+      <header className="mb-2 flex shrink-0 items-center justify-between gap-3">
         <Link
           to="/biblioteca"
           className="inline-flex items-center gap-1 text-sm text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
@@ -104,6 +108,14 @@ export function SongViewerPage() {
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Biblioteca
         </Link>
+        {loadState === 'ready' && song && editable ? (
+          <Button asChild variant="outline" size="sm">
+            <Link to={`/cifra/${song.id}/editar`} aria-label={`Editar a cifra ${song.title}`}>
+              <Pencil className="mr-2 h-4 w-4" aria-hidden />
+              Editar
+            </Link>
+          </Button>
+        ) : null}
       </header>
 
       {/* Área do viewer com scroll interno */}

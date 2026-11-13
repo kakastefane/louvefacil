@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -30,11 +30,52 @@ import type { SongDraft } from '@/types/domain'
 const NOTES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
 const NONE_KEY = '__none__'
 export const CONTENT_MAX_LENGTH = 20000
+/** Fórmulas de compasso aceitas (MVP). */
+export const TIME_SIGNATURES = [
+  '2/4',
+  '3/4',
+  '4/4',
+  '5/4',
+  '6/4',
+  '6/8',
+  '7/8',
+  '9/8',
+  '12/8',
+  '2/2',
+] as const
+
+const BPM_MIN = 20
+const BPM_MAX = 400
 
 const songFormSchema = z.object({
   title: z.string().trim().min(1, 'Informe o título da cifra.').max(200, 'O título deve ter até 200 caracteres.'),
   artist: z.string().trim().max(120, 'O artista deve ter até 120 caracteres.').optional().or(z.literal('')),
   original_key: z.string().nullable().optional(),
+  bpm: z
+    .string()
+    .trim()
+    .refine(
+      (value) => {
+        if (value === '') return true
+        if (!/^\d{1,3}$/.test(value)) return false
+        const n = Number(value)
+        return n >= BPM_MIN && n <= BPM_MAX
+      },
+      `Informe um BPM entre ${BPM_MIN} e ${BPM_MAX} (ou deixe em branco).`,
+    )
+    .optional(),
+  time_signature: z
+    .string()
+    .nullable()
+    .optional()
+    .refine(
+      (value) =>
+        value == null ||
+        value === '' ||
+        value === NONE_KEY ||
+        (TIME_SIGNATURES as readonly string[]).includes(value),
+      'Escolha uma fórmula de compasso válida.',
+    ),
   themes: z.array(z.string()).default([]),
   content: z.string().min(1, 'Informe o conteúdo da cifra em ChordPro.').max(CONTENT_MAX_LENGTH, 'O conteúdo deve ter até 20000 caracteres.'),
 })
@@ -45,7 +86,13 @@ export function songDraftFromForm(values: SongEditorFormValues): SongDraft {
   const title = values.title.trim()
   const artist = values.artist?.trim() ? values.artist.trim() : null
   const originalKey = values.original_key && values.original_key !== NONE_KEY ? values.original_key : null
-  return { title, artist, original_key: originalKey, themes: normalizeThemes(values.themes), content: values.content }
+  const bpmRaw = values.bpm?.trim() ?? ''
+  const bpm = bpmRaw === '' ? null : Number(bpmRaw)
+  const timeSignature =
+    values.time_signature && values.time_signature !== NONE_KEY && values.time_signature !== ''
+      ? values.time_signature
+      : null
+  return { title, artist, original_key: originalKey, bpm, time_signature: timeSignature, themes: normalizeThemes(values.themes), content: values.content }
 }
 
 interface SongEditorFormProps {
@@ -55,6 +102,8 @@ interface SongEditorFormProps {
   serverError?: string | null
   submitLabel?: string
   preview?: ReactNode
+  /** Chave do rascunho no localStorage; omitida desativa a persistência local. */
+  draftKey?: string
 }
 
 export function SongEditorForm({
@@ -64,11 +113,41 @@ export function SongEditorForm({
   serverError,
   submitLabel = 'Salvar cifra',
   preview,
+  draftKey,
 }: SongEditorFormProps) {
-  const { control, handleSubmit, setValue, formState: { errors } } = useForm<SongEditorFormValues>({
+  const { control, handleSubmit, setValue, formState: { errors, isDirty } } = useForm<SongEditorFormValues>({
     resolver: zodResolver(songFormSchema) as unknown as Resolver<SongEditorFormValues>,
-    defaultValues: { title: '', artist: '', original_key: null, themes: [], content: '', ...defaultValues },
+    defaultValues: { title: '', artist: '', original_key: null, bpm: '', time_signature: null, themes: [], content: '', ...defaultValues },
   })
+
+  // Persistência local do rascunho: sobrevive à recarga da aba (mobile descarta
+  // abas em segundo plano) sem perder o que foi digitado.
+  const allValues = useWatch({ control })
+  const draftTimer = useRef<number | undefined>(undefined)
+
+  useEffect(() => {
+    if (!draftKey || !isDirty) return
+    window.clearTimeout(draftTimer.current)
+    draftTimer.current = window.setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey, JSON.stringify(allValues))
+      } catch {
+        // armazenamento cheio/indisponível: ignora sem quebrar a edição
+      }
+    }, 400)
+    return () => window.clearTimeout(draftTimer.current)
+  }, [allValues, draftKey, isDirty])
+
+  // Aviso de saída com rascunho não salvo (recarregar/fechar a aba)
+  useEffect(() => {
+    if (!isDirty) return
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [isDirty])
 
   const content = useWatch({ control, name: 'content' }) ?? ''
   const themes = useWatch({ control, name: 'themes' }) ?? []
@@ -115,8 +194,8 @@ export function SongEditorForm({
       <CardHeader>
         <CardTitle>Editor de cifra</CardTitle>
         <CardDescription>
-          ChordPro: {'{tom: G}'}, seções entre [Colchetes] e acordes entre colchetes,
-          ex.: [G]Antes de me conhe[C]ces.
+          ChordPro: {'{key: G}'}, seções com {'{section: Verso 1}'} (badge) e
+          acordes entre colchetes, ex.: [G]Antes de me conhe[C]ces.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -157,6 +236,42 @@ export function SongEditorForm({
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="song-bpm">BPM</Label>
+                <Input
+                  id="song-bpm"
+                  type="number"
+                  min={BPM_MIN}
+                  max={BPM_MAX}
+                  inputMode="numeric"
+                  placeholder="72"
+                  aria-invalid={errors.bpm ? true : undefined}
+                  aria-describedby={errors.bpm ? 'song-bpm-error' : undefined}
+                  {...control.register('bpm')}
+                />
+                {errors.bpm ? <p id="song-bpm-error" className="text-xs text-destructive">{errors.bpm.message}</p> : null}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="song-meter">Compasso</Label>
+                <Controller
+                  control={control}
+                  name="time_signature"
+                  render={({ field }) => (
+                    <Select value={field.value ?? NONE_KEY} onValueChange={(value) => field.onChange(value === NONE_KEY ? null : value)}>
+                      <SelectTrigger id="song-meter"><SelectValue placeholder="Sem compasso" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NONE_KEY}>Sem compasso</SelectItem>
+                        {TIME_SIGNATURES.map((meter) => <SelectItem key={meter} value={meter}>{meter}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.time_signature ? <p id="song-meter-error" role="alert" className="text-xs text-destructive">{errors.time_signature.message}</p> : null}
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="song-theme-input">Temas</Label>
               <div className="flex gap-2">
@@ -187,7 +302,7 @@ export function SongEditorForm({
                 className="font-mono text-sm"
                 aria-invalid={errors.content ? true : undefined}
                 aria-describedby={errors.content ? 'song-content-error' : undefined}
-                placeholder={'{tom: G}\n\n[Verso 1]\n[G]Antes de me conhe[C]ces'}
+                placeholder={'{key: G}\n{section: Verso 1}\n[G]Antes de me conhe[C]ces'}
                 {...contentRegisterProps}
                 onKeyDown={handleContentKeyDown}
               />

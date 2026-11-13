@@ -31,6 +31,9 @@ const CHORD_TOKEN =
 const SECTION_LINE = /^\s*\[([^\]]+)\]\s*(.*)$/
 const ANY_META_LINE = /^\s*\{[^}]*\}\s*$/
 const META_LINE = /^\s*\{\s*(title|key|artist)\s*:\s*([^}]*)\}\s*$/i
+// tag específica de seção: {section: Intro} (aliases {sec}, {seção}, {secao})
+const SECTION_META_LINE =
+  /^\s*\{\s*(?:section|sec|seção|secao)\s*:\s*([^}]*)\}\s*$/i
 
 /** Um token isolado parece acorde? (usado p/ linhas só de acordes/seções) */
 export function isChordToken(token: string): boolean {
@@ -88,6 +91,16 @@ export function parseChordPro(content: string): ParsedSong {
       if (metaKey === 'title') song.title = value
       else if (metaKey === 'artist') song.artist = value
       else if (metaKey === 'key') song.key = value
+      continue
+    }
+
+    // tag de seção {section: …}: vira linha de seção (badge no render)
+    const sectionMeta = rawLine.match(SECTION_META_LINE)
+    if (sectionMeta) {
+      const label = sectionMeta[1].trim()
+      if (label !== '') {
+        song.lines.push({ type: 'section', label, chords: [] })
+      }
       continue
     }
 

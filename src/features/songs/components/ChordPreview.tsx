@@ -111,11 +111,12 @@ export function ChordPreview({ content, transpose = 0, fontSize, className }: Ch
               // Respiro entre blocos, equivalente a uma linha em branco
               return <div key={index} aria-hidden className="h-[1.5em]" />
             case 'section':
+              // Badge destacado: rótulo visual de seção da música (Intro, Verso, …)
               return (
                 <div key={index} className="mt-4 first:mt-0">
-                  <p className="font-sans text-[0.8em] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <span className="inline-flex items-center rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[0.72em] font-semibold uppercase tracking-[0.09em] text-primary">
                     {line.label}
-                  </p>
+                  </span>
                   <ChordLine chords={line.chords} />
                 </div>
               )

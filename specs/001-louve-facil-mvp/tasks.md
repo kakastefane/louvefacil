@@ -203,6 +203,15 @@ preserva texto. Roteiro em quickstart.md S5
 - [x] T054 Executar validação completa: `npm run lint` + `npm test` + `npm run build` verdes; percorrer `specs/001-louve-facil-mvp/quickstart.md` S1–S5 e registrar evidências
 - [x] T055 Limpeza final: remover TODOs/debug, revisar textos PT-BR (Princípio VI), conferir commits pequenos e descritivos (convenções da constituição)
 
+## Phase 9: Feedback do usuário (teste com Supabase real)
+
+**Purpose**: Ajustes pedidos durante os testes manuais pós-MVP
+
+- [x] T056 Botões "Editar cifra": ícone no card da biblioteca e botão no topo do visualizador (só canEdit) → rota `/cifra/:id/editar` (a rota existia, era órfã)
+- [x] T057 Tag de seção `{section: Nome}` (aliases `{sec}`/`{secao}`/`{seção}`, case-insensitive) no parser; seções (metatag ou `[Rótulo]`) renderizadas como **badge** destacado no preview; contrato chordpro-format.md atualizado; seed com `{section: …}`
+- [x] T058 Rascunho do editor persistido no localStorage (debounce 400 ms) com restauração + banner "Rascunho restaurado" e descarte; aviso `beforeunload` com formulário sujo — sobrevive a recargas/descarte de abas (a aba nunca mais perde a edição em andamento)
+- [x] T059 BPM e compasso por cifra: migração `0003_bpm_meter.sql` (bpm 20–400, time_signature `n/d`), campos no domínio/repo/service (validação + friendly errors), no editor (schema zod + campos com select de fórmulas) e no visualizador (chips `♩ = N` e `n/d`); seed e data-model.md atualizados
+
 ---
 
 ## Dependencies & Execution Order

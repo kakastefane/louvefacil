@@ -8,6 +8,8 @@ function song(partial: Partial<Song> & Pick<Song, 'id' | 'title'>): Song {
     team_id: 'team-1',
     artist: null,
     original_key: null,
+    bpm: null,
+    time_signature: null,
     themes: [],
     content: '[G]letra',
     created_by: 'user-1',

@@ -43,6 +43,20 @@ export function SongViewer({ song, transpose, fontSize }: SongViewerProps) {
         <p className="text-sm font-medium text-foreground">
           {keyLine(song.original_key, transpose)}
         </p>
+        {song.bpm !== null || song.time_signature ? (
+          <div className="flex flex-wrap items-center gap-1.5 pt-0.5" aria-label="Andamento e compasso">
+            {song.bpm !== null ? (
+              <Badge variant="outline" aria-label={`Andamento de ${song.bpm} BPM`}>
+                ♩ = {song.bpm}
+              </Badge>
+            ) : null}
+            {song.time_signature ? (
+              <Badge variant="outline" aria-label={`Compasso ${song.time_signature}`}>
+                {song.time_signature}
+              </Badge>
+            ) : null}
+          </div>
+        ) : null}
         {song.themes.length > 0 ? (
           <ul
             className="flex flex-wrap gap-1.5 pt-1"

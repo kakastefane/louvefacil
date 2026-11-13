@@ -11,7 +11,7 @@ da constituição).
 
 ```text
 documento    := (metatag | linha_vazia | linha_de_seção | linha_de_acordes | linha_de_letra)*
-metatag      := "{" chave ":" valor "}"          # aceitas: title, key, artist
+metatag      := "{" chave ":" valor "}"          # aceitas: title, key, artist, section
 linha_de_seção := "[" rótulo "]" [ conteúdo ]    # ex.: "[Intro] G  D/F#  Em7  C9"
 linha_de_letra := ( "[" acorde "]"? caractere )*
 acorde       := nota suffix? ["/" nota]?
@@ -21,9 +21,14 @@ nota         := ("A"|"B"|"C"|"D"|"E"|"F"|"G") ("#"|"b")?
 - **Metatags** no topo: `{title: ...}`, `{key: ...}`, `{artist: ...}`.
   `title`/`artist` oficiais são as colunas; a metatag `{key}` serve de tom de
   referência quando a coluna `original_key` estiver vazia.
-- **Linha com só `[Rótulo]`** (e opcionalmente acordes soltos em seguida) =
-  cabeçalho de seção, estilizado, não é alvo de transposição, exceto os
-  acordes soltos após o rótulo (ex. `[Intro] G  D/F#`), que são transpostos.
+- **Seções da música** — duas formas equivalentes, ambas renderizadas como
+  **badge destacado** (rótulo compacto com fundo e borda, ex.: `INTRO`,
+  `VERSO 1`, `REFRÃO`) e não como alvo de transposição:
+  1. metatag específica `{section: Intro}` — recomendada; aceita aliases
+     `{sec: …}`, `{secao: …}` e `{seção: …}`, case-insensitive;
+  2. linha com só `[Rótulo]` (e opcionalmente acordes soltos em seguida) =
+     cabeçalho de seção (ex. `[Intro] G  D/F#`); os acordes soltos após o
+     rótulo são transpostos, o rótulo nunca é.
 - **Acordes inline** `[Am]` posicionados imediatamente antes da sílaba:
   render em grade de duas linhas (acorde acima, alinhado à coluna da sílaba).
 - **Linhas só de acordes** (ex. pentagrama de introdução): tokens separados

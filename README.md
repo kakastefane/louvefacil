@@ -47,8 +47,9 @@ Dexie (IndexedDB read-through) · vite-plugin-pwa (Workbox) · Vitest
 2. **Authentication → Providers** → Email habilitado (confirmação de e-mail
    conforme sua preferência).
 3. **SQL Editor** → execute, em ordem:
-   `supabase/migrations/0001_schema.sql` e depois
-   `supabase/migrations/0002_rls_policies.sql`.
+   `supabase/migrations/0001_schema.sql`, depois
+   `supabase/migrations/0002_rls_policies.sql` e por fim
+   `supabase/migrations/0003_bpm_meter.sql` (adiciona BPM e compasso às cifras).
 4. **Variáveis de ambiente**:
    ```bash
    cp .env.example .env.local
@@ -116,7 +117,7 @@ src/
   hooks/        # useAuth, useTheme
   lib/          # supabase client, utils (PT-BR), env
 supabase/
-  migrations/   # 0001_schema.sql → 0002_rls_policies.sql (idempotentes)
+  migrations/   # 0001_schema.sql → 0002_rls_policies.sql → 0003_bpm_meter.sql (idempotentes)
   seed_sample_songs.sql
 specs/          # especificação, plano, tarefas e contratos
 ```

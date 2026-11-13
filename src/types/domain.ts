@@ -32,6 +32,8 @@ export interface Song {
   title: string
   artist: string | null
   original_key: string | null
+  bpm: number | null
+  time_signature: string | null
   themes: string[]
   content: string
   created_by: string
@@ -41,7 +43,13 @@ export interface Song {
 
 export type SongDraft = Pick<
   Song,
-  'title' | 'artist' | 'original_key' | 'themes' | 'content'
+  | 'title'
+  | 'artist'
+  | 'original_key'
+  | 'bpm'
+  | 'time_signature'
+  | 'themes'
+  | 'content'
 >
 
 export interface Setlist {

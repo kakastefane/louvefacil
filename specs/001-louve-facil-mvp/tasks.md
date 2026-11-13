@@ -157,15 +157,15 @@ próxima/anterior com tom salvo. Roteiro em quickstart.md S4
 
 ### Tests for User Story 4
 
-- [ ] T039 [P] [US4] Testes de unidade de renumeração de posições (1..n após remoção/reordenação) e limites de desvio (−11..+11) em `tests/unit/setlists/positions.test.ts`
+- [x] T039 [P] [US4] Testes de unidade de renumeração de posições (1..n após remoção/reordenação) e limites de desvio (−11..+11) em `tests/unit/setlists/positions.test.ts`
 
 ### Implementation for User Story 4
 
-- [ ] T040 [P] [US4] Criar service de setlists `src/features/setlists/service.ts`: listar/criar (name obrigatório, event_date opcional)/atualizar/excluir, adicionar/remover item (unique(setlist_id,song_id)), `reorder_setlist` e `duplicate_setlist` via RPC, definir `transpose` por item — read-through via `src/db/repos/setlists.ts`
-- [ ] T041 [US4] Criar `src/features/setlists/pages/SetlistsPage.tsx` (`/setlists`): lista com nome/data/contagem, criar (dialog com validação), estado vazio
-- [ ] T042 [US4] Criar `src/features/setlists/pages/SetlistDetailPage.tsx` (`/setlist/:id`): itens com tom exibido, dialog para adicionar músicas da biblioteca (com busca), reordenação drag-and-drop com @dnd-kit/sortable (persistindo via RPC), ações editor/dono (duplicar, excluir setlist, editar nome/data), excluir item com renumeração
-- [ ] T043 [US4] Criar `src/features/setlists/pages/PlayModePage.tsx` (`/setlist/:id/tocar`): render de cada música com o `transpose` do item, navegação próxima/anterior (botões grandes + setas do teclado + swipe), indicador "3 de 12", saída para o setlist; setlist vazio → CTA para adicionar músicas
-- [ ] T044 [US4] Aplicar guards de papel nas telas US4: membro vê itens/tom e usa modo tocar, sem controles de escrita; tentativa de escrita por membro → bloqueio com explicação (FR-029)
+- [x] T040 [P] [US4] Criar service de setlists `src/features/setlists/service.ts`: listar/criar (name obrigatório, event_date opcional)/atualizar/excluir, adicionar/remover item (unique(setlist_id,song_id)), `reorder_setlist` e `duplicate_setlist` via RPC, definir `transpose` por item — read-through via `src/db/repos/setlists.ts`
+- [x] T041 [US4] Criar `src/features/setlists/pages/SetlistsPage.tsx` (`/setlists`): lista com nome/data/contagem, criar (dialog com validação), estado vazio
+- [x] T042 [US4] Criar `src/features/setlists/pages/SetlistDetailPage.tsx` (`/setlist/:id`): itens com tom exibido, dialog para adicionar músicas da biblioteca (com busca), reordenação drag-and-drop com @dnd-kit/sortable (persistindo via RPC), ações editor/dono (duplicar, excluir setlist, editar nome/data), excluir item com renumeração
+- [x] T043 [US4] Criar `src/features/setlists/pages/PlayModePage.tsx` (`/setlist/:id/tocar`): render de cada música com o `transpose` do item, navegação próxima/anterior (botões grandes + setas do teclado + swipe), indicador "3 de 12", saída para o setlist; setlist vazio → CTA para adicionar músicas
+- [x] T044 [US4] Aplicar guards de papel nas telas US4: membro vê itens/tom e usa modo tocar, sem controles de escrita; tentativa de escrita por membro → bloqueio com explicação (FR-029)
 
 **Checkpoint**: US1–US4 funcionam (quickstart S4)
 

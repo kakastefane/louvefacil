@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { transposeKey } from '@/features/chords/transpose'
 import { Badge } from '@/components/ui/badge'
 import { ChordPreview } from '@/features/songs/components/ChordPreview'
@@ -10,6 +11,8 @@ export interface SongViewerProps {
   transpose: number
   /** Tamanho base da fonte em px. */
   fontSize: number
+  /** Controles renderizados acima da cifra, logo abaixo dos temas (ex.: alterador de tom). */
+  controls?: ReactNode
 }
 
 function formatSemitoneOffset(transpose: number): string {
@@ -29,7 +32,7 @@ function keyLine(originalKey: string | null, transpose: number): string {
  * O desvio de transposição e o tamanho da fonte afetam somente o render —
  * o texto-fonte da cifra permanece intacto.
  */
-export function SongViewer({ song, transpose, fontSize }: SongViewerProps) {
+export function SongViewer({ song, transpose, fontSize, controls }: SongViewerProps) {
   return (
     <article className="flex h-full min-h-0 flex-col">
       {/* Cabeçalho: título, artista, tom exibido e temas */}
@@ -70,6 +73,9 @@ export function SongViewer({ song, transpose, fontSize }: SongViewerProps) {
           </ul>
         ) : null}
       </header>
+
+      {/* Controles (alterador de tom) — acima da cifra, abaixo dos temas */}
+      {controls ? <div className="shrink-0 border-b border-border px-3 py-2">{controls}</div> : null}
 
       {/* Corpo: render puro do texto-fonte via ChordPreview */}
       <div className="min-h-0 flex-1">

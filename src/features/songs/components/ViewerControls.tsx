@@ -17,7 +17,7 @@ const FONT_SIZE_STORAGE_KEY = 'louve-facil:viewer-font-size'
 const MINUS_SIGN = '−' // U+2212
 
 /** Limita o desvio de transposição à faixa [TRANSPOSE_MIN, TRANSPOSE_MAX]. */
-function clampTranspose(value: number): number {
+export function clampTranspose(value: number): number {
   if (!Number.isFinite(value)) return 0
   return Math.min(TRANSPOSE_MAX, Math.max(TRANSPOSE_MIN, Math.trunc(value)))
 }
@@ -68,11 +68,85 @@ export function saveViewerFontSize(px: number): void {
   }
 }
 
-export interface ViewerControlsProps {
+export interface TransposeControlsProps {
   /** Desvio atual em semitons (−11..+11). */
   transpose: number
   /** Chamado com o próximo desvio, sempre clampado em [TRANSPOSE_MIN, TRANSPOSE_MAX]. */
   onTransposeChange: (next: number) => void
+  /** Classes extras no contêiner. */
+  className?: string
+}
+
+/**
+ * Alterador de tom em semitons (FR-019/FR-022): botões grandes com reset.
+ * Feito para ficar visível — renderize entre o cabeçalho (temas) e a cifra.
+ * Componente 100% controlado — a persistência fica a cargo da página.
+ */
+export function TransposeControls({
+  transpose,
+  onTransposeChange,
+  className,
+}: TransposeControlsProps): JSX.Element {
+  const clampedTranspose = clampTranspose(transpose)
+  const canDecreaseTranspose = clampedTranspose > TRANSPOSE_MIN
+  const canIncreaseTranspose = clampedTranspose < TRANSPOSE_MAX
+
+  const handleTranspose = (delta: number) => {
+    onTransposeChange(clampTranspose(clampedTranspose + delta))
+  }
+
+  return (
+    <div
+      className={cn(
+        'flex items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5',
+        className,
+      )}
+      role="group"
+      aria-label="Transposição"
+    >
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        aria-label="Diminuir transposição"
+        disabled={!canDecreaseTranspose}
+        onClick={() => handleTranspose(-1)}
+      >
+        <Minus aria-hidden="true" />
+      </Button>
+      <span
+        className="min-w-[3ch] text-center font-mono text-base font-bold tabular-nums"
+        aria-live="polite"
+        aria-label="Desvio de transposição em semitons"
+      >
+        {formatTranspose(clampedTranspose)}
+      </span>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        aria-label="Aumentar transposição"
+        disabled={!canIncreaseTranspose}
+        onClick={() => handleTranspose(1)}
+      >
+        <Plus aria-hidden="true" />
+      </Button>
+      {clampedTranspose !== 0 && (
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          aria-label="Redefinir transposição"
+          onClick={() => onTransposeChange(0)}
+        >
+          <RotateCcw aria-hidden="true" />
+        </Button>
+      )}
+    </div>
+  )
+}
+
+export interface FontSizeControlsProps {
   /** Tamanho de fonte atual em px (idealmente um dos VIEWER_FONT_STEPS). */
   fontSize: number
   /** Chamado com o próximo passo de fonte (sem ultrapassar os extremos). */
@@ -82,24 +156,17 @@ export interface ViewerControlsProps {
 }
 
 /**
- * Barra de controles do visualizador de cifra (FR-019/FR-021/FR-022/FR-023):
- * transposição em semitons com reset e tamanho de fonte em passos discretos.
+ * Controle de tamanho de fonte em passos discretos (FR-021/FR-023).
  * Componente 100% controlado — a persistência fica a cargo da página.
  */
-export function ViewerControls(props: ViewerControlsProps): JSX.Element {
-  const { transpose, onTransposeChange, fontSize, onFontSizeChange, className } = props
-
-  const clampedTranspose = clampTranspose(transpose)
-  const canDecreaseTranspose = clampedTranspose > TRANSPOSE_MIN
-  const canIncreaseTranspose = clampedTranspose < TRANSPOSE_MAX
-
+export function FontSizeControls({
+  fontSize,
+  onFontSizeChange,
+  className,
+}: FontSizeControlsProps): JSX.Element {
   const fontIndex = nearestFontStepIndex(fontSize)
   const canDecreaseFont = fontIndex > 0
   const canIncreaseFont = fontIndex < VIEWER_FONT_STEPS.length - 1
-
-  const handleTranspose = (delta: number) => {
-    onTransposeChange(clampTranspose(clampedTranspose + delta))
-  }
 
   const handleFontSize = (delta: number) => {
     const nextIndex = Math.min(
@@ -112,79 +179,36 @@ export function ViewerControls(props: ViewerControlsProps): JSX.Element {
   return (
     <div
       className={cn(
-        'flex items-center justify-center gap-2 border-t border-border bg-background/95 px-3 py-2 backdrop-blur sm:gap-3',
+        'flex items-center justify-center gap-2 border-t border-border bg-background/95 px-3 py-2 backdrop-blur',
         className,
       )}
+      role="group"
+      aria-label="Tamanho da fonte"
     >
-      <div className="flex items-center gap-2" role="group" aria-label="Transposição">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          aria-label="Diminuir transposição"
-          disabled={!canDecreaseTranspose}
-          onClick={() => handleTranspose(-1)}
-        >
-          <Minus aria-hidden="true" />
-        </Button>
-        <span
-          className="min-w-[3ch] text-center font-mono text-sm font-semibold tabular-nums"
-          aria-live="polite"
-          aria-label="Desvio de transposição em semitons"
-        >
-          {formatTranspose(clampedTranspose)}
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        aria-label="Diminuir fonte"
+        disabled={!canDecreaseFont}
+        onClick={() => handleFontSize(-1)}
+      >
+        <span aria-hidden="true" className="text-xs font-semibold">
+          A{MINUS_SIGN}
         </span>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          aria-label="Aumentar transposição"
-          disabled={!canIncreaseTranspose}
-          onClick={() => handleTranspose(1)}
-        >
-          <Plus aria-hidden="true" />
-        </Button>
-        {clampedTranspose !== 0 && (
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            aria-label="Redefinir transposição"
-            onClick={() => onTransposeChange(0)}
-          >
-            <RotateCcw aria-hidden="true" />
-          </Button>
-        )}
-      </div>
-
-      <div className="h-6 w-px bg-border" aria-hidden="true" />
-
-      <div className="flex items-center gap-2" role="group" aria-label="Tamanho da fonte">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          aria-label="Diminuir fonte"
-          disabled={!canDecreaseFont}
-          onClick={() => handleFontSize(-1)}
-        >
-          <span aria-hidden="true" className="text-xs font-semibold">
-            A{MINUS_SIGN}
-          </span>
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          aria-label="Aumentar fonte"
-          disabled={!canIncreaseFont}
-          onClick={() => handleFontSize(1)}
-        >
-          <span aria-hidden="true" className="text-base font-semibold">
-            A+
-          </span>
-        </Button>
-      </div>
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        aria-label="Aumentar fonte"
+        disabled={!canIncreaseFont}
+        onClick={() => handleFontSize(1)}
+      >
+        <span aria-hidden="true" className="text-base font-semibold">
+          A+
+        </span>
+      </Button>
     </div>
   )
 }

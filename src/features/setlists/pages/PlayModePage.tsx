@@ -5,6 +5,10 @@ import { ChevronLeft, ChevronRight, ListMusic, Music, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states'
 import { SongViewer } from '@/features/songs/components/SongViewer'
+import {
+  TransposeControls,
+  clampTranspose,
+} from '@/features/songs/components/ViewerControls'
 import { listSongs } from '@/features/songs/service'
 import { getSetlist, listItems } from '@/features/setlists/service'
 import { useTeam } from '@/features/teams/TeamContext'
@@ -17,10 +21,11 @@ const SWIPE_THRESHOLD_PX = 48
 
 /**
  * Modo tocar (T043) — rota /setlist/:id/tocar. Uma música por vez, ocupando
- * a tela, para apresentar no culto. Somente leitura: a transposição de cada
- * item é definida no detalhe do setlist e aqui apenas se reflete no render.
+ * a tela, para apresentar no culto. O alterador de tom (acima da cifra,
+ * abaixo dos temas) ajusta a exibição em memória por sessão — não grava no
+ * banco; o tom persistente do item é o definido no detalhe do setlist.
  * Todos os papéis (inclusive 'member') podem usar — sem RequireEditor.
- * A posição não persiste: refresh volta para a primeira música.
+ * A posição e os ajustes de tom não persistem: refresh volta ao estado inicial.
  */
 export function PlayModePage() {
   const { id } = useParams<{ id: string }>()
@@ -33,6 +38,7 @@ export function PlayModePage() {
   const [songsById, setSongsById] = useState<Map<string, Song>>(new Map())
   const [loadState, setLoadState] = useState<LoadState>('loading')
   const [index, setIndex] = useState(0)
+  const [transposeOverrides, setTransposeOverrides] = useState<Record<string, number>>({})
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
 
   // Uma carga só: setlist + itens + cifras da equipe montadas em Map (id→Song).
@@ -136,6 +142,15 @@ export function PlayModePage() {
 
   const currentItem = items[safeIndex] ?? null
   const currentSong = currentItem ? (songsById.get(currentItem.song_id) ?? null) : null
+  // Ajuste de tom por sessão (em memória): não grava no banco — o tom
+  // persistente do item é o definido no detalhe do setlist.
+  const currentTranspose = currentItem
+    ? (transposeOverrides[currentItem.id] ?? currentItem.transpose)
+    : 0
+  const setCurrentTranspose = (next: number) => {
+    if (!currentItem) return
+    setTransposeOverrides((prev) => ({ ...prev, [currentItem.id]: clampTranspose(next) }))
+  }
 
   function renderBody() {
     if (teamLoading || loadState === 'loading') {
@@ -188,7 +203,14 @@ export function PlayModePage() {
       )
     }
     return (
-      <SongViewer song={currentSong} transpose={currentItem.transpose} fontSize={18} />
+      <SongViewer
+        song={currentSong}
+        transpose={currentTranspose}
+        fontSize={18}
+        controls={
+          <TransposeControls transpose={currentTranspose} onTransposeChange={setCurrentTranspose} />
+        }
+      />
     )
   }
 

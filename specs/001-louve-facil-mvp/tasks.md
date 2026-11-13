@@ -134,7 +134,7 @@ transpõe ±N com acordes legíveis (bemóis em tons de bemol); texto-fonte inta
 
 ### Tests for User Story 3
 
-- [ ] T035 [P] [US3] Testes de unidade da busca/filtro (case-insensitive título/artista, filtro por tema canônico, resultado vazio) em `tests/unit/songs/filter.test.ts`
+- [x] T035 [P] [US3] Testes de unidade da busca/filtro (case-insensitive título/artista, filtro por tema canônico, resultado vazio) em `tests/unit/songs/filter.test.ts`
 
 ### Implementation for User Story 3
 

@@ -55,5 +55,7 @@ nota         := ("A"|"B"|"C"|"D"|"E"|"F"|"G") ("#"|"b")?
   na coluna da sílaba-alvo; linha 2 = letra.
 - Cabeçalho mostra: título, artista, tom exibido (tom original + desvio) e
   temas.
-- Controles: transposição (+/−, com indicador `+2`/`0`/`−1`), tamanho da
-  fonte (passos discretos), alternância claro/escuro.
+- Controles: transposição (+/−, com indicador do tom atual ex.: `A`; ao
+  transpor, o desvio aparece em destaque menor ex.: `+2`), tamanho da
+  fonte (passos discretos), alternância claro/escuro, botão modo cantor
+  (oculta cifras, só letra).

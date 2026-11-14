@@ -3,6 +3,7 @@ import { Minus, Plus, RotateCcw, EyeOff, Eye } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { transposeKey } from '@/features/chords/transpose'
 
 /** Passos discretos de tamanho de fonte do visualizador (px). */
 export const VIEWER_FONT_STEPS: readonly number[] = [14, 16, 18, 20, 24]
@@ -94,6 +95,8 @@ export interface TransposeControlsProps {
   transpose: number
   /** Chamado com o próximo desvio, sempre clampado em [TRANSPOSE_MIN, TRANSPOSE_MAX]. */
   onTransposeChange: (next: number) => void
+  /** Tom de referência da cifra (ex.: 'G'); usado para mostrar o tom atual. */
+  referenceKey?: string | null
   /** Valor de redefinição (padrão 0); botão só aparece quando o atual é diferente. */
   resetTo?: number
   /** Classes extras no contêiner. */
@@ -102,11 +105,15 @@ export interface TransposeControlsProps {
 
 /**
  * Alterador de tom em semitons (FR-019/FR-022): botões no estilo padrão do app.
+ * O indicador central mostra o tom atual (ex.: `A`), calculado a partir do tom
+ * de referência da cifra; ao transpor, o desvio aparece em destaque menor
+ * (ex.: `+2`). Sem tom de referência, volta ao indicador numérico.
  * Componente 100% controlado — a persistência fica a cargo da página.
  */
 export function TransposeControls({
   transpose,
   onTransposeChange,
+  referenceKey,
   resetTo = 0,
   className,
 }: TransposeControlsProps): JSX.Element {
@@ -117,6 +124,10 @@ export function TransposeControls({
   const handleTranspose = (delta: number) => {
     onTransposeChange(clampTranspose(clampedTranspose + delta))
   }
+
+  const currentKey = referenceKey ? transposeKey(referenceKey, clampedTranspose) : null
+  const mainLabel = currentKey ?? formatTranspose(clampedTranspose)
+  const subLabel = currentKey && clampedTranspose !== 0 ? formatTranspose(clampedTranspose) : null
 
   return (
     <div
@@ -135,11 +146,16 @@ export function TransposeControls({
         <Minus aria-hidden="true" />
       </Button>
       <span
-        className="min-w-[3ch] text-center font-mono text-base font-bold tabular-nums"
+        className="flex min-w-[4ch] flex-col items-center justify-center leading-none"
         aria-live="polite"
-        aria-label="Desvio de transposição em semitons"
+        aria-label={`Tom atual: ${mainLabel}${subLabel ? ` (desvio ${subLabel})` : ''}`}
       >
-        {formatTranspose(clampedTranspose)}
+        <span className="font-mono text-base font-bold tabular-nums">{mainLabel}</span>
+        {subLabel ? (
+          <span className="mt-0.5 text-[0.625rem] font-semibold text-muted-foreground">
+            {subLabel}
+          </span>
+        ) : null}
       </span>
       <Button
         type="button"
@@ -175,6 +191,8 @@ export function TransposeControls({
 export interface ViewerToolbarProps {
   transpose: number
   onTransposeChange: (next: number) => void
+  /** Tom de referência da cifra (ex.: 'G'); usado para mostrar o tom atual. */
+  referenceKey?: string | null
   /** Valor de redefinição do tom (padrão 0). */
   transposeResetTo?: number
   fontSize: number
@@ -189,6 +207,7 @@ export interface ViewerToolbarProps {
 export function ViewerToolbar({
   transpose,
   onTransposeChange,
+  referenceKey,
   transposeResetTo,
   fontSize,
   onFontSizeChange,
@@ -201,6 +220,7 @@ export function ViewerToolbar({
       <TransposeControls
         transpose={transpose}
         onTransposeChange={onTransposeChange}
+        referenceKey={referenceKey}
         resetTo={transposeResetTo}
       />
       <div className="flex items-center gap-2">

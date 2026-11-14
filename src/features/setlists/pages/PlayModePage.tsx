@@ -269,6 +269,7 @@ export function PlayModePage() {
           <ViewerToolbar
             transpose={currentTranspose}
             onTransposeChange={setCurrentTranspose}
+            referenceKey={currentSong.original_key}
             transposeResetTo={currentItem.transpose}
             fontSize={fontSize}
             onFontSizeChange={handleFontSizeChange}

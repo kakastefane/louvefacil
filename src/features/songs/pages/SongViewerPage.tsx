@@ -113,6 +113,7 @@ export function SongViewerPage() {
           <ViewerToolbar
             transpose={transpose}
             onTransposeChange={setTranspose}
+            referenceKey={song.original_key}
             fontSize={fontSize}
             onFontSizeChange={handleFontSizeChange}
             hideChords={hideChords}

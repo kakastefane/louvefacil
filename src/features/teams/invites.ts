@@ -13,12 +13,23 @@ import type { Invite } from '@/types/domain'
  * o único caminho atômico para virar membro (data-model).
  */
 
+/** Id do usuário da sessão atual (null quando desconectado). */
+async function currentUserId(): Promise<string | null> {
+  const supabase = requireSupabase()
+  const { data } = await supabase.auth.getSession()
+  return data.session?.user.id ?? null
+}
+
 /** Gera convite com código URL-safe e expiração default de 7 dias (repo). */
 export async function generateInvite(
   teamId: string,
   expiresAt?: string,
 ): Promise<Invite> {
-  return createInviteRepo(teamId, generateInviteCode(), expiresAt)
+  const userId = await currentUserId()
+  if (!userId)
+    throw new Error('Sessão expirada — entre novamente para gerar o convite.')
+
+  return createInviteRepo(teamId, userId, generateInviteCode(), expiresAt)
 }
 
 /** Convites da equipe (read-through — responde do cache offline). */

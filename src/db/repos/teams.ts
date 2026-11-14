@@ -133,6 +133,7 @@ export async function listInvites(teamId: string): Promise<Invite[]> {
 /** Gera um convite (código gerado no client; RLS valida o papel). */
 export async function createInvite(
   teamId: string,
+  createdBy: string,
   code: string,
   expiresAt?: string,
 ): Promise<Invite> {
@@ -142,6 +143,7 @@ export async function createInvite(
     .from('invites')
     .insert({
       team_id: teamId,
+      created_by: createdBy,
       code,
       expires_at: expiresAt ?? defaultInviteExpiry(),
     })

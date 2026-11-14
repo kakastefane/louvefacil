@@ -13,12 +13,13 @@ const NAV_ITEMS = [
 ]
 
 /**
- * Shell do app: cabeçalho com seletor de equipe, navegação inferior no
- * mobile / lateral no desktop, área de conteúdo responsiva (≥360px).
+ * Shell do app: cabeçalho com seletor de equipe, navegação inferior abaixo de
+ * 1024px (mobile e tablets retrato, ex. iPad) / lateral a partir de lg (desktop
+ * e tablets paisagem), área de conteúdo responsiva (≥360px).
  */
 export function AppShell({ children }: { children?: ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col md:flex-row">
+    <div className="flex min-h-dvh flex-col lg:flex-row">
       {/* Skip link: primeiro elemento focável, visível apenas com foco */}
       <a
         href="#conteudo-principal"
@@ -27,7 +28,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
         Pular para o conteúdo
       </a>
       {/* Cabeçalho (mobile) / lateral (desktop) */}
-      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur md:hidden">
+      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur lg:hidden">
         <div className="flex items-center justify-between px-4 py-2">
           <span className="text-base font-bold">Louve Fácil</span>
           <TeamSwitcher />
@@ -35,7 +36,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
         <OfflineBanner />
       </header>
 
-      <aside className="hidden w-60 shrink-0 border-r md:flex md:h-dvh md:flex-col">
+      <aside className="hidden w-60 shrink-0 border-r lg:flex lg:h-dvh lg:flex-col">
         <div className="flex items-center gap-2 px-4 py-4">
           <span className="text-lg font-bold">Louve Fácil</span>
         </div>
@@ -66,14 +67,14 @@ export function AppShell({ children }: { children?: ReactNode }) {
         </div>
       </aside>
 
-      <main id="conteudo-principal" tabIndex={-1} className="flex-1 pb-20 md:pb-0">
-        <div className="mx-auto w-full max-w-3xl px-4 py-4 md:py-6">
+      <main id="conteudo-principal" tabIndex={-1} className="flex-1 pb-20 lg:pb-0">
+        <div className="mx-auto w-full max-w-3xl px-4 py-4 lg:py-6">
           {children ?? <Outlet />}
         </div>
       </main>
 
       {/* Navegação inferior (mobile) */}
-      <nav aria-label="Navegação inferior" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t bg-background/95 backdrop-blur md:hidden">
+      <nav aria-label="Navegação inferior" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t bg-background/95 backdrop-blur lg:hidden">
         {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}

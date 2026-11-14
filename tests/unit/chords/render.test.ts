@@ -50,6 +50,49 @@ describe('renderSong', () => {
   })
 })
 
+describe('renderSong com hideChords (modo cantor)', () => {
+  it('oculta acordes inline, mantendo a letra intacta', () => {
+    const parsed = parseChordPro('{key: G}\n[G]Cada [D/F#]palavra')
+    const rendered = renderSong(parsed, { semitones: 0, hideChords: true })
+    const lyric = rendered.lines.find((l) => l.type === 'lyric')
+    if (!lyric || lyric.type !== 'lyric') throw new Error('linha de letra não encontrada')
+    expect(lyric.text).toBe('Cada palavra')
+    expect(lyric.chords).toEqual([])
+  })
+
+  it('remove linhas só de acordes e acordes de seções', () => {
+    const parsed = parseChordPro('[Intro] G  D  Em\n[G]Refrão\n[C]Outra')
+    const rendered = renderSong(parsed, { semitones: 0, hideChords: true })
+    // Seções viram apenas o rótulo (sem acordes soltos)
+    expect(rendered.lines.map((l) => l.type)).toEqual(['section', 'lyric', 'lyric'])
+    const section = rendered.lines[0]
+    if (section.type !== 'section') throw new Error('esperada seção')
+    expect(section.label).toBe('Intro')
+    expect(section.chords).toEqual([])
+    // Letras mantêm o texto, sem acordes
+    const lyrics = rendered.lines.filter((l) => l.type === 'lyric')
+    expect(lyrics.map((l) => l.type === 'lyric' && l.text)).toEqual(['Refrão', 'Outra'])
+    for (const l of lyrics) {
+      if (l.type === 'lyric') expect(l.chords).toEqual([])
+    }
+  })
+
+  it('linhas só de acordes desaparecem no modo cantor', () => {
+    const parsed = parseChordPro('G  D  Em\n[G]Refrão')
+    const rendered = renderSong(parsed, { semitones: 0, hideChords: true })
+    expect(rendered.lines.map((l) => l.type)).toEqual(['lyric'])
+  })
+
+  it('sem hideChords mantém o comportamento original', () => {
+    const parsed = parseChordPro('[Intro] G  D\n[G]Refrão')
+    const rendered = renderSong(parsed, { semitones: 0 })
+    expect(rendered.lines.map((l) => l.type)).toEqual(['section', 'lyric'])
+    const section = rendered.lines[0]
+    if (section.type !== 'section') throw new Error('esperada seção')
+    expect(section.chords.map((c) => c.label)).toEqual(['G', 'D'])
+  })
+})
+
 describe('buildChordSegments', () => {
   it('calcula espaçamento sem sobreposição', () => {
     const segments = buildChordSegments([

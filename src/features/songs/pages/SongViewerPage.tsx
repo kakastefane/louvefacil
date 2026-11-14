@@ -9,6 +9,8 @@ import {
   ViewerToolbar,
   loadViewerFontSize,
   saveViewerFontSize,
+  loadViewerHideChords,
+  saveViewerHideChords,
 } from '@/features/songs/components/ViewerControls'
 import { getSongById } from '@/features/songs/service'
 import { useTeam } from '@/features/teams/TeamContext'
@@ -34,6 +36,7 @@ export function SongViewerPage() {
   const [transpose, setTranspose] = useState(0)
   // Tamanho da fonte: carregado do localStorage no mount (padrão 16 px)
   const [fontSize, setFontSize] = useState<number>(() => loadViewerFontSize())
+  const [hideChords, setHideChords] = useState(() => loadViewerHideChords())
 
   const loadSong = useCallback(async () => {
     if (!id) {
@@ -70,6 +73,11 @@ export function SongViewerPage() {
     saveViewerFontSize(px)
   }
 
+  function handleHideChordsChange(next: boolean) {
+    setHideChords(next)
+    saveViewerHideChords(next)
+  }
+
   function renderBody() {
     if (loadState === 'loading') {
       return <LoadingState label="Carregando cifra…" />
@@ -100,12 +108,15 @@ export function SongViewerPage() {
         song={song}
         transpose={transpose}
         fontSize={fontSize}
+        hideChords={hideChords}
         controls={
           <ViewerToolbar
             transpose={transpose}
             onTransposeChange={setTranspose}
             fontSize={fontSize}
             onFontSizeChange={handleFontSizeChange}
+            hideChords={hideChords}
+            onHideChordsChange={handleHideChordsChange}
           />
         }
       />

@@ -35,6 +35,8 @@ export interface RenderOptions {
   semitones?: number
   /** Tom de referência (original_key da coluna ou metatag {key}). */
   referenceKey?: string | null
+  /** Modo cantor: mantém só a letra e os rótulos de seção; acordes são omitidos. */
+  hideChords?: boolean
 }
 
 function transposeAll(chords: string[], semitones: number, reference: string | null): RenderedChord[] {
@@ -54,42 +56,50 @@ function transposeSlots(slots: ChordSlot[], semitones: number, reference: string
 export function renderSong(parsed: ParsedSong, options: RenderOptions = {}): RenderedSong {
   const semitones = options.semitones ?? 0
   const reference = options.referenceKey ?? parsed.key ?? null
+  const hideChords = options.hideChords ?? false
 
-  const lines: RenderedLine[] = parsed.lines.map((line) => {
+  const lines: RenderedLine[] = []
+  for (const line of parsed.lines) {
     switch (line.type) {
       case 'empty':
-        return { type: 'empty' }
+        lines.push({ type: 'empty' })
+        break
       case 'section':
-        return {
+        lines.push({
           type: 'section',
           label: line.label,
-          chords: transposeAll(line.chords, semitones, reference),
+          chords: hideChords ? [] : transposeAll(line.chords, semitones, reference),
           text: '',
-        }
+        })
+        break
       case 'chords':
-        return {
+        // No modo cantor as linhas só de acordes somem por completo
+        if (hideChords) break
+        lines.push({
           type: 'chords',
           chords: transposeAll(line.chords, semitones, reference),
           text: '',
-        }
+        })
+        break
       case 'lyric':
-        return {
+        lines.push({
           type: 'lyric',
-          chords: transposeSlots(line.chords, semitones, reference),
+          chords: hideChords ? [] : transposeSlots(line.chords, semitones, reference),
           text: line.text,
-        }
+        })
+        break
       default:
         // metatags nunca chegam às linhas parseadas
-        return { type: 'empty' }
+        break
     }
-  })
-
+  }
+  // No modo cantor, linhas só-de-acordes somem; seções mantêm só o rótulo
   return {
     title: parsed.title,
     artist: parsed.artist,
     key: parsed.key,
     displayedKey: parsed.key ? transposeKey(parsed.key, semitones) : null,
-    lines,
+    lines: lines.filter((line) => line.type !== 'chords'),
   }
 }
 

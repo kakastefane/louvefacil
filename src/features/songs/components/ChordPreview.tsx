@@ -19,6 +19,8 @@ export interface ChordPreviewProps {
   transpose?: number
   /** Tamanho base da fonte em px (projetado para o visualizador da US3). */
   fontSize?: number
+  /** Modo cantor: oculta os acordes, exibindo só a letra (default false). */
+  hideChords?: boolean
   /** Classes extras no contêiner com scroll interno. */
   className?: string
 }
@@ -50,7 +52,7 @@ function ChordLine({ chords, className }: { chords: RenderedChord[]; className?:
  * com debounce de digitação e transposição aplicada apenas ao render
  * (Princípio IV — o texto-fonte nunca é alterado).
  */
-export function ChordPreview({ content, transpose = 0, fontSize, className }: ChordPreviewProps) {
+export function ChordPreview({ content, transpose = 0, fontSize, hideChords, className }: ChordPreviewProps) {
   const [debouncedContent, setDebouncedContent] = useState(content)
 
   // Debounce do parse (~250 ms) para não re-renderizar a cada tecla.
@@ -65,8 +67,8 @@ export function ChordPreview({ content, transpose = 0, fontSize, className }: Ch
     // renderSong já transpõe internamente via `semitones` (pipeline testado
     // em tests/unit/chords/render.test.ts) — equivalente a aplicar
     // transposeChord/transposeKey em cada acorde, sem mutar a fonte.
-    return renderSong(parsed, { semitones: transpose })
-  }, [debouncedContent, transpose])
+    return renderSong(parsed, { semitones: transpose, hideChords })
+  }, [debouncedContent, transpose, hideChords])
 
   // Estado vazio imediato (sem esperar o debounce): digite algo…
   if (content.trim() === '') {

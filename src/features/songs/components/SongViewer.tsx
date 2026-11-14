@@ -13,6 +13,8 @@ export interface SongViewerProps {
   fontSize: number
   /** Controles renderizados acima da cifra, logo abaixo dos temas (ex.: alterador de tom). */
   controls?: ReactNode
+  /** Modo cantor: oculta os acordes, exibindo só a letra (default false). */
+  hideChords?: boolean
 }
 
 function formatSemitoneOffset(transpose: number): string {
@@ -32,7 +34,7 @@ function keyLine(originalKey: string | null, transpose: number): string {
  * O desvio de transposição e o tamanho da fonte afetam somente o render —
  * o texto-fonte da cifra permanece intacto.
  */
-export function SongViewer({ song, transpose, fontSize, controls }: SongViewerProps) {
+export function SongViewer({ song, transpose, fontSize, controls, hideChords }: SongViewerProps) {
   return (
     <article className="flex h-full min-h-0 flex-col">
       {/* Cabeçalho: título, artista, tom exibido e temas */}
@@ -83,6 +85,7 @@ export function SongViewer({ song, transpose, fontSize, controls }: SongViewerPr
           content={song.content}
           transpose={transpose}
           fontSize={fontSize}
+          hideChords={hideChords}
           className="h-full"
         />
       </div>

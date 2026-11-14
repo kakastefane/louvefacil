@@ -10,6 +10,8 @@ import {
   clampTranspose,
   loadViewerFontSize,
   saveViewerFontSize,
+  loadViewerHideChords,
+  saveViewerHideChords,
 } from '@/features/songs/components/ViewerControls'
 import { listSongs } from '@/features/songs/service'
 import { getSetlist, listItems } from '@/features/setlists/service'
@@ -76,6 +78,12 @@ export function PlayModePage() {
     id ? loadTransposeOverrides(id) : {},
   )
   const [fontSize, setFontSize] = useState<number>(() => loadViewerFontSize())
+  const [hideChords, setHideChords] = useState(() => loadViewerHideChords())
+
+  const handleHideChordsChange = () => {
+    setHideChords(!hideChords)
+    saveViewerHideChords(!hideChords)
+  }
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
 
   // Uma carga só: setlist + itens + cifras da equipe montadas em Map (id→Song).
@@ -256,6 +264,7 @@ export function PlayModePage() {
         song={currentSong}
         transpose={currentTranspose}
         fontSize={fontSize}
+        hideChords={hideChords}
         controls={
           <ViewerToolbar
             transpose={currentTranspose}
@@ -263,6 +272,8 @@ export function PlayModePage() {
             transposeResetTo={currentItem.transpose}
             fontSize={fontSize}
             onFontSizeChange={handleFontSizeChange}
+            hideChords={hideChords}
+            onHideChordsChange={handleHideChordsChange}
           />
         }
       />

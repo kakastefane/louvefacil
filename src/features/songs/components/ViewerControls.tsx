@@ -1,5 +1,5 @@
 import type { JSX } from 'react'
-import { Minus, Plus, RotateCcw } from 'lucide-react'
+import { Minus, Plus, RotateCcw, EyeOff, Eye } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -63,6 +63,27 @@ export function loadViewerFontSize(): number {
 export function saveViewerFontSize(px: number): void {
   try {
     localStorage.setItem(FONT_SIZE_STORAGE_KEY, String(px))
+  } catch {
+    // ignora silenciosamente
+  }
+}
+
+/** Persistência de ocultação de acordes (modo cantor) */
+const HIDE_CHORDS_STORAGE_KEY = 'louve-facil:viewer-hide-chords'
+
+/** Lê o estado de ocultação de acordes (true = acordes ocultos, só letra) */
+export function loadViewerHideChords(): boolean {
+  try {
+    return localStorage.getItem(HIDE_CHORDS_STORAGE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+/** Persiste o estado de ocultação de acordes */
+export function saveViewerHideChords(value: boolean): void {
+  try {
+    localStorage.setItem(HIDE_CHORDS_STORAGE_KEY, value ? '1' : '0')
   } catch {
     // ignora silenciosamente
   }
@@ -147,7 +168,8 @@ export function TransposeControls({
 
 /**
  * Barra única renderizada acima da cifra (abaixo dos temas), na mesma linha:
- * seletor de tom à esquerda e tamanho da letra à direita (FR-019/FR-021/FR-022/FR-023).
+ * seletor de tom à esquerda e, à direita, tamanho da letra + botão "esconder cifras"
+ * (modo cantor) (FR-019/FR-021/FR-022/FR-023).
  * Componentes 100% controlados — a persistência fica a cargo da página.
  */
 export interface ViewerToolbarProps {
@@ -157,6 +179,9 @@ export interface ViewerToolbarProps {
   transposeResetTo?: number
   fontSize: number
   onFontSizeChange: (next: number) => void
+  /** Oculta os acordes, exibindo apenas a letra (modo cantor). */
+  hideChords: boolean
+  onHideChordsChange: (next: boolean) => void
   /** Classes extras no contêiner. */
   className?: string
 }
@@ -167,6 +192,8 @@ export function ViewerToolbar({
   transposeResetTo,
   fontSize,
   onFontSizeChange,
+  hideChords,
+  onHideChordsChange,
   className,
 }: ViewerToolbarProps): JSX.Element {
   return (
@@ -176,7 +203,24 @@ export function ViewerToolbar({
         onTransposeChange={onTransposeChange}
         resetTo={transposeResetTo}
       />
-      <FontSizeControls fontSize={fontSize} onFontSizeChange={onFontSizeChange} />
+      <div className="flex items-center gap-2">
+        <FontSizeControls fontSize={fontSize} onFontSizeChange={onFontSizeChange} />
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          aria-label={hideChords ? 'Mostrar cifras' : 'Ocultar cifras'}
+          aria-pressed={hideChords}
+          className={cn(hideChords && 'border-primary/40 bg-primary/10 text-primary')}
+          onClick={() => onHideChordsChange(!hideChords)}
+        >
+          {hideChords ? (
+            <Eye aria-hidden="true" />
+          ) : (
+            <EyeOff aria-hidden="true" />
+          )}
+        </Button>
+      </div>
     </div>
   )
 }

@@ -3,6 +3,7 @@ import {
   defaultInviteExpiry,
   generateInviteCode,
   isInviteActive,
+  normalizeInviteCode,
 } from '@/lib/utils'
 
 describe('validade de convite (FR-007/FR-009)', () => {
@@ -46,5 +47,43 @@ describe('geração de código de convite', () => {
 
   it('respeita o mínimo de 8 caracteres exigido pelo banco', () => {
     expect(generateInviteCode(8)).toHaveLength(8)
+  })
+})
+
+describe('código de convite digitado', () => {
+  it('remove espaços/hífens e converte para maiúsculas', () => {
+    expect(normalizeInviteCode(' abc7def9gh ')).toBe('ABC7DEF9GH')
+    expect(normalizeInviteCode('ABC7 DEF9 GH')).toBe('ABC7DEF9GH')
+    expect(normalizeInviteCode('abc7-def9-gh')).toBe('ABC7DEF9GH')
+    expect(normalizeInviteCode('ABC7\nDEF9GH')).toBe('ABC7DEF9GH')
+  })
+
+  it('extrai o código quando a pessoa cola o link completo', () => {
+    expect(
+      normalizeInviteCode('https://louvefacil.vercel.app/convite/abc7def9gh'),
+    ).toBe('ABC7DEF9GH')
+    expect(
+      normalizeInviteCode('https://louvefacil.vercel.app/convite/ABC7DEF9GH/'),
+    ).toBe('ABC7DEF9GH')
+    expect(
+      normalizeInviteCode('https://louvefacil.vercel.app/convite/ABC7DEF9GH?utm=1'),
+    ).toBe('ABC7DEF9GH')
+  })
+
+  it('ignora espaços/codificação de URL ao redor do código', () => {
+    expect(
+      normalizeInviteCode('…/convite/ABC7DEF9GH%20'),
+    ).toBe('ABC7DEF9GH')
+  })
+
+  it('devolve vazio quando não há código', () => {
+    expect(normalizeInviteCode('')).toBe('')
+    expect(normalizeInviteCode('   ')).toBe('')
+    expect(normalizeInviteCode('- -')).toBe('')
+  })
+
+  it('não altera um código já normalizado', () => {
+    const code = generateInviteCode()
+    expect(normalizeInviteCode(code)).toBe(code)
   })
 })

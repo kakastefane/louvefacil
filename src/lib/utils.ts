@@ -30,6 +30,34 @@ export function generateInviteCode(length = 10): string {
 }
 
 /**
+ * Normaliza um código de convite digitado ou colado pela pessoa:
+ *
+ * - aceita o código puro (`abc7-def9gh`) ou o link completo
+ *   (`https://louvefacil.vercel.app/convite/ABC7DEF9GH`), extraindo o código;
+ * - remove espaços, hífens e quebras de linha (facilita colar de mensagens);
+ * - converte para maiúsculas — o banco compara o código de forma exata.
+ *
+ * Devolve `''` quando não há nada aproveitável. Não valida existência: isso é
+ * papel da RPC `join_team_with_code`.
+ */
+export function normalizeInviteCode(raw: string): string {
+  const trimmed = raw.trim()
+  if (!trimmed) return ''
+
+  const fromLink = trimmed.match(/\/convite\/([^/?#\s]+)/i)
+  const base = fromLink ? fromLink[1] : trimmed
+
+  let decoded = base
+  try {
+    decoded = decodeURIComponent(base)
+  } catch {
+    // percent-encoding inválido: usa o texto como veio
+  }
+
+  return decoded.replace(/[\s-]+/g, '').toUpperCase()
+}
+
+/**
  * Normaliza temas: trim, colapsa espaços, remove vazios e duplicatas
  * equivalentes (case-insensitive) — mantém a primeira grafia (FR-018).
  */

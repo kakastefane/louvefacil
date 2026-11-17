@@ -23,7 +23,7 @@ import {
   joinTeamWithCode,
   type InviteJoinErrorCode,
 } from '@/features/teams/invites'
-import { friendlyErrorMessage } from '@/lib/utils'
+import { friendlyErrorMessage, normalizeInviteCode } from '@/lib/utils'
 
 /**
  * Página de convite (T025, FR-007/009): fluxo por estado —
@@ -73,6 +73,9 @@ export function InvitePage() {
   const { user, loading: authLoading } = useAuth()
   const { refresh, setActiveTeamId } = useTeam()
 
+  // o link pode vir com minúsculas/espaços; o banco compara o código exato
+  const inviteCode = normalizeInviteCode(code ?? '')
+
   const [status, setStatus] = useState<PageStatus>('idle')
   const [errorCode, setErrorCode] = useState<InviteJoinErrorCode | null>(null)
   const [errorMessage, setErrorMessage] = useState('')
@@ -88,12 +91,12 @@ export function InvitePage() {
 
   const join = useCallback(
     async (displayName: string) => {
-      if (!code) return
+      if (!inviteCode) return
       lastDisplayName.current = displayName
       setFormError('')
       setStatus('joining')
       try {
-        const teamId = await joinTeamWithCode(code, displayName)
+        const teamId = await joinTeamWithCode(inviteCode, displayName)
         await refresh()
         setActiveTeamId(teamId)
         navigate('/biblioteca', { replace: true })
@@ -115,13 +118,13 @@ export function InvitePage() {
         setStatus('error')
       }
     },
-    [code, navigate, refresh, setActiveTeamId],
+    [inviteCode, navigate, refresh, setActiveTeamId],
   )
 
   // ao autenticar: nome conhecido → entra direto; senão → pede o nome
   const autoJoinAttempted = useRef(false)
   useEffect(() => {
-    if (status !== 'idle' || authLoading || !user || !code) return
+    if (status !== 'idle' || authLoading || !user || !inviteCode) return
     const known = knownDisplayName(user)
     if (!known) {
       setStatus('name')
@@ -130,10 +133,10 @@ export function InvitePage() {
     if (autoJoinAttempted.current) return
     autoJoinAttempted.current = true
     void join(known)
-  }, [status, authLoading, user, code, join])
+  }, [status, authLoading, user, inviteCode, join])
 
   // link sem código → tratado como convite inválido
-  if (!code) {
+  if (!inviteCode) {
     return (
       <InviteErrorView
         title={ERROR_TITLES.invalid_code}
@@ -147,7 +150,7 @@ export function InvitePage() {
 
   // sem sessão → login preservando o destino (FR-007)
   if (!user) {
-    const target = encodeURIComponent(`/convite/${code}`)
+    const target = encodeURIComponent(`/convite/${inviteCode}`)
     return <Navigate to={`/login?redirect=${target}`} replace />
   }
 
@@ -269,7 +272,7 @@ function InviteErrorView({
                 Contacte o responsável pela equipe
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Peça a ele um novo link de convite para participar.
+                Peça a ele um novo link ou o código do convite para participar.
               </p>
             </div>
           ) : null}

@@ -114,6 +114,7 @@ export function SettingsPage() {
   const [inviteDays, setInviteDays] = useState(INVITE_DEFAULT_EXPIRY_DAYS)
   const [generatingInvite, setGeneratingInvite] = useState(false)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const [copiedRawCode, setCopiedRawCode] = useState<string | null>(null)
   const [revokeTarget, setRevokeTarget] = useState<Invite | null>(null)
   const [revokingInvite, setRevokingInvite] = useState(false)
   const [inviteActionError, setInviteActionError] = useState<string | null>(null)
@@ -135,13 +136,14 @@ export function SettingsPage() {
 
   // feedbacks temporários (nome salvo / link copiado) somem sozinhos
   useEffect(() => {
-    if (!nameFeedback && !copiedCode) return
+    if (!nameFeedback && !copiedCode && !copiedRawCode) return
     const timer = window.setTimeout(() => {
       setNameFeedback(null)
       setCopiedCode(null)
+      setCopiedRawCode(null)
     }, 2500)
     return () => window.clearTimeout(timer)
-  }, [nameFeedback, copiedCode])
+  }, [nameFeedback, copiedCode, copiedRawCode])
 
   const loadMembers = useCallback(async () => {
     if (!teamId) return
@@ -254,6 +256,15 @@ export function SettingsPage() {
       setCopiedCode(invite.code)
     } catch {
       setInvitesError('Não foi possível copiar o link. Copie o código manualmente.')
+    }
+  }
+
+  async function handleCopyInviteCode(invite: Invite) {
+    try {
+      await navigator.clipboard.writeText(invite.code)
+      setCopiedRawCode(invite.code)
+    } catch {
+      setInvitesError('Não foi possível copiar o código. Selecione e copie manualmente.')
     }
   }
 
@@ -536,22 +547,29 @@ export function SettingsPage() {
                       Expira em {formatDatePtBr(invite.expires_at)}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     {active ? (
                       <>
-                        {copiedCode === invite.code ? (
-                          <span className="flex items-center gap-1 text-xs font-medium text-green-600">
-                            <Check className="h-3.5 w-3.5" /> Link copiado!
-                          </span>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => void handleCopyInviteLink(invite)}
-                          >
-                            <Copy /> Copiar link
-                          </Button>
-                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void handleCopyInviteLink(invite)}
+                        >
+                          <Copy />
+                          {copiedCode === invite.code
+                            ? 'Link copiado'
+                            : 'Copiar link'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void handleCopyInviteCode(invite)}
+                        >
+                          <Copy />
+                          {copiedRawCode === invite.code
+                            ? 'Código copiado'
+                            : 'Copiar código'}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"

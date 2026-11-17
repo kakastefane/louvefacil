@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link2, Loader2, Plus, Users } from 'lucide-react'
+import { KeyRound, Loader2, Plus, Users } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
@@ -27,8 +27,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/hooks/useAuth'
 import { useTeam } from '@/features/teams/TeamContext'
+import {
+  InviteJoinError,
+  joinTeamWithCode,
+} from '@/features/teams/invites'
 import { createTeam } from '@/features/teams/service'
-import { friendlyErrorMessage, formatDatePtBr } from '@/lib/utils'
+import {
+  friendlyErrorMessage,
+  formatDatePtBr,
+  normalizeInviteCode,
+} from '@/lib/utils'
 import type { TeamRole } from '@/types/domain'
 
 const createTeamSchema = z.object({
@@ -40,6 +48,21 @@ const createTeamSchema = z.object({
 })
 
 type CreateTeamForm = z.infer<typeof createTeamSchema>
+
+const joinTeamSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .min(1, 'Informe o código do convite.')
+    .max(300, 'Cole apenas o código ou o link do convite.'),
+  displayName: z
+    .string()
+    .trim()
+    .min(1, 'Informe seu nome para exibição na equipe.')
+    .max(80, 'O nome deve ter até 80 caracteres.'),
+})
+
+type JoinTeamForm = z.infer<typeof joinTeamSchema>
 
 const roleLabels: Record<TeamRole, string> = {
   owner: 'Dono',
@@ -94,13 +117,21 @@ export function TeamsPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [retrying, setRetrying] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
-  const [inviteHelpOpen, setInviteHelpOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
+
+  const [joinOpen, setJoinOpen] = useState(false)
+  const [joining, setJoining] = useState(false)
+  const [joinError, setJoinError] = useState<string | null>(null)
 
   const form = useForm<CreateTeamForm>({
     resolver: zodResolver(createTeamSchema),
     defaultValues: { name: '' },
+  })
+
+  const joinForm = useForm<JoinTeamForm>({
+    resolver: zodResolver(joinTeamSchema),
+    defaultValues: { code: '', displayName: '' },
   })
 
   // carrega/tenta de novo as memberships (o contexto não expõe o erro)
@@ -139,6 +170,15 @@ export function TeamsPage() {
     setCreateOpen(true)
   }, [form])
 
+  const openJoinDialog = useCallback(() => {
+    setJoinError(null)
+    joinForm.reset({
+      code: '',
+      displayName: resolveDisplayName(user),
+    })
+    setJoinOpen(true)
+  }, [joinForm, user])
+
   const handleCreateTeam = form.handleSubmit(async (values) => {
     setCreating(true)
     setCreateError(null)
@@ -156,6 +196,36 @@ export function TeamsPage() {
       setCreateError(friendlyCreateTeamError(error))
     } finally {
       setCreating(false)
+    }
+  })
+
+  const handleJoinTeam = joinForm.handleSubmit(async (values) => {
+    const code = normalizeInviteCode(values.code)
+    if (code.length < 8) {
+      joinForm.setError('code', {
+        message: 'Código incompleto — confira e tente novamente.',
+      })
+      return
+    }
+
+    setJoining(true)
+    setJoinError(null)
+    try {
+      const teamId = await joinTeamWithCode(code, values.displayName)
+      // o ingresso cria a membership no servidor: atualiza o cache antes de
+      // ativar a equipe para os dados já carregarem filtrados por ela
+      await refresh()
+      setJoinOpen(false)
+      joinForm.reset()
+      handleSelectTeam(teamId)
+    } catch (error) {
+      setJoinError(
+        error instanceof InviteJoinError
+          ? error.message
+          : friendlyErrorMessage(error),
+      )
+    } finally {
+      setJoining(false)
     }
   })
 
@@ -189,13 +259,20 @@ export function TeamsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Equipes</h1>
           <p className="text-sm text-muted-foreground">
-            Escolha a equipe em que quer trabalhar ou crie uma nova.
+            Escolha a equipe em que quer trabalhar, entre com um código de
+            convite ou crie uma nova.
           </p>
         </div>
-        <Button onClick={openCreateDialog}>
-          <Plus className="h-4 w-4" />
-          Criar equipe
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" onClick={openJoinDialog}>
+            <KeyRound className="h-4 w-4" />
+            Tenho um código
+          </Button>
+          <Button onClick={openCreateDialog}>
+            <Plus className="h-4 w-4" />
+            Criar equipe
+          </Button>
+        </div>
       </header>
 
       {hasTeams ? (
@@ -232,12 +309,18 @@ export function TeamsPage() {
         <EmptyState
           icon={<Users className="h-10 w-10" />}
           title="Você ainda não participa de nenhuma equipe"
-          description="Crie uma equipe para começar a organizar cifras e setlists com seu grupo."
+          description="Recebeu um convite? Entre com o código (ou abra o link enviado). Se preferir começar do zero, crie sua própria equipe."
           action={
-            <Button onClick={openCreateDialog}>
-              <Plus className="h-4 w-4" />
-              Criar equipe
-            </Button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button onClick={openJoinDialog}>
+                <KeyRound className="h-4 w-4" />
+                Tenho um código de convite
+              </Button>
+              <Button variant="outline" onClick={openCreateDialog}>
+                <Plus className="h-4 w-4" />
+                Criar uma equipe
+              </Button>
+            </div>
           }
           className="py-16"
         />
@@ -246,15 +329,12 @@ export function TeamsPage() {
       <section className="rounded-xl border bg-muted/30 px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            Foi convidado para uma equipe existente?
+            Recebeu um convite? Use o código ou o link enviado pelo responsável
+            pela equipe.
           </p>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setInviteHelpOpen(true)}
-          >
-            <Link2 className="h-4 w-4" />
-            Entrar via convite
+          <Button variant="ghost" size="sm" onClick={openJoinDialog}>
+            <KeyRound className="h-4 w-4" />
+            Entrar com código
           </Button>
         </div>
       </section>
@@ -313,20 +393,88 @@ export function TeamsPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={inviteHelpOpen} onOpenChange={setInviteHelpOpen}>
+      <Dialog open={joinOpen} onOpenChange={setJoinOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Entrar via convite</DialogTitle>
+            <DialogTitle>Entrar com código de convite</DialogTitle>
             <DialogDescription>
-              Para entrar em uma equipe, você precisa de um link de convite
-              gerado pelo dono da equipe — algo como
-              …/convite/CÓDIGO. Abra o link no seu navegador e você entrará
-              automaticamente como membro.
+              Digite o código enviado pelo responsável pela equipe. Você também
+              pode colar o link completo do convite.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setInviteHelpOpen(false)}>Entendi</Button>
-          </DialogFooter>
+          <form onSubmit={handleJoinTeam} className="grid gap-4" noValidate>
+            <div className="grid gap-2">
+              <Label htmlFor="invite-code">Código do convite</Label>
+              <Input
+                id="invite-code"
+                placeholder="Ex.: ABC7DEF9GH"
+                maxLength={300}
+                autoFocus
+                autoCapitalize="characters"
+                autoComplete="off"
+                spellCheck={false}
+                className="font-mono uppercase tracking-wider"
+                aria-invalid={Boolean(joinForm.formState.errors.code)}
+                {...joinForm.register('code', {
+                  onChange: () => setJoinError(null),
+                })}
+              />
+              {joinForm.formState.errors.code ? (
+                <p className="text-sm text-destructive">
+                  {joinForm.formState.errors.code.message}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Maiúsculas, minúsculas e espaços não fazem diferença.
+                </p>
+              )}
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="invite-display-name">Seu nome na equipe</Label>
+              <Input
+                id="invite-display-name"
+                placeholder="Ex.: Maria Silva"
+                maxLength={80}
+                autoComplete="name"
+                aria-invalid={Boolean(
+                  joinForm.formState.errors.displayName,
+                )}
+                {...joinForm.register('displayName', {
+                  onChange: () => setJoinError(null),
+                })}
+              />
+              {joinForm.formState.errors.displayName ? (
+                <p className="text-sm text-destructive">
+                  {joinForm.formState.errors.displayName.message}
+                </p>
+              ) : null}
+            </div>
+            {joinError ? (
+              <p className="text-sm text-destructive" role="alert">
+                {joinError}
+              </p>
+            ) : null}
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setJoinOpen(false)}
+                disabled={joining}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={joining}>
+                {joining ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Entrando…
+                  </>
+                ) : (
+                  'Entrar na equipe'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

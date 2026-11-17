@@ -4,7 +4,11 @@ import {
   createInvite as createInviteRepo,
 } from '@/db/repos/teams'
 import { requireSupabase } from '@/lib/supabase'
-import { assertOnline, generateInviteCode } from '@/lib/utils'
+import {
+  assertOnline,
+  generateInviteCode,
+  normalizeInviteCode,
+} from '@/lib/utils'
 import type { Invite } from '@/types/domain'
 
 /**
@@ -66,9 +70,9 @@ export class InviteJoinError extends Error {
 
 /** Mensagens prontas para UI, uma por motivo (PT-BR, tom dos vizinhos). */
 const JOIN_ERROR_MESSAGES: Record<InviteJoinErrorCode, string> = {
-  invalid_code: 'Convite inválido.',
-  expired_code: 'Este convite expirou. Peça um novo link ao responsável.',
-  revoked_code: 'Este convite foi revogado. Peça um novo link ao responsável.',
+  invalid_code: 'Código de convite inválido. Confira os caracteres e tente novamente.',
+  expired_code: 'Este convite expirou. Peça um novo convite ao responsável pela equipe.',
+  revoked_code: 'Este convite foi revogado. Peça um novo convite ao responsável pela equipe.',
   not_authenticated: 'Faça login para entrar em uma equipe.',
   invalid_display_name: 'Informe seu nome para exibição na equipe.',
 }
@@ -84,9 +88,10 @@ function parseJoinError(raw: string): InviteJoinError | null {
 }
 
 /**
- * Entra na equipe pelo código (idempotente: se já é membro, a RPC
- * devolve a própria equipe). Ingresso é escrita no servidor — offline
- * falha rápido com o erro amigável de conexão.
+ * Entra na equipe pelo código ou pelo link do convite (idempotente: se já é
+ * membro, a RPC devolve a própria equipe). A entrada é normalizada aqui para
+ * que quem digita minúsculas, hífens ou cola o link completo funcione igual.
+ * Ingresso é escrita no servidor — offline falha rápido com o erro amigável.
  */
 export async function joinTeamWithCode(
   code: string,
@@ -95,11 +100,19 @@ export async function joinTeamWithCode(
   assertOnline()
   const supabase = requireSupabase()
 
+  const normalizedCode = normalizeInviteCode(code)
+  if (!normalizedCode) {
+    throw new InviteJoinError(
+      'invalid_code',
+      JOIN_ERROR_MESSAGES.invalid_code,
+    )
+  }
+
   const name = displayName.trim()
   if (!name) throw new InviteJoinError('invalid_display_name', JOIN_ERROR_MESSAGES.invalid_display_name)
 
   const { data, error } = await supabase.rpc('join_team_with_code', {
-    p_code: code.trim(),
+    p_code: normalizedCode,
     p_display_name: name,
   })
   if (error) {

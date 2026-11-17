@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -125,18 +125,36 @@ export function SongEditorForm({
   const allValues = useWatch({ control })
   const draftTimer = useRef<number | undefined>(undefined)
 
+  /** Salva o rascunho agora (sem debounce) — chamado quando a aba é ocultada. */
+  const saveDraftNow = useCallback(() => {
+    if (!draftKey || !isDirty) return
+    try {
+      localStorage.setItem(draftKey, JSON.stringify(allValues))
+    } catch {
+      // armazenamento cheio/indisponível: ignora sem quebrar a edição
+    }
+  }, [allValues, draftKey, isDirty])
+
   useEffect(() => {
     if (!draftKey || !isDirty) return
     window.clearTimeout(draftTimer.current)
     draftTimer.current = window.setTimeout(() => {
-      try {
-        localStorage.setItem(draftKey, JSON.stringify(allValues))
-      } catch {
-        // armazenamento cheio/indisponível: ignora sem quebrar a edição
-      }
+      saveDraftNow()
     }, 400)
     return () => window.clearTimeout(draftTimer.current)
-  }, [allValues, draftKey, isDirty])
+  }, [allValues, draftKey, isDirty, saveDraftNow])
+
+  // Ao ocultar a aba (trocar de aba, minimizar app, bloquear tela),
+  // salva o rascunho imediatamente para não perder nada se o iOS/Android
+  // terminar a página em segundo plano.
+  useEffect(() => {
+    if (!draftKey || !isDirty) return
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') saveDraftNow()
+    }
+    window.addEventListener('visibilitychange', onHide)
+    return () => window.removeEventListener('visibilitychange', onHide)
+  }, [draftKey, isDirty, saveDraftNow])
 
   // Aviso de saída com rascunho não salvo (recarregar/fechar a aba)
   useEffect(() => {

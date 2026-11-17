@@ -1,0 +1,9 @@
+{
+  "title": "Exemplo — Canção Nova",
+  "artist": "Equipe de Louvor",
+  "original_key": "G",
+  "bpm": null,
+  "time_signature": null,
+  "themes": ["Adoração", "Celebração"],
+  "content": "{section: Intro}\nG  D/F#  Em7  C9\n\n{section: Verso 1}\n[G]Ao raiar da manhã [D/F#]eu quero ouvir\n[Em7]Tua voz me cha[C9]mando a seguir\n\n{section: Refrão}\n[C9]Grande é o Se[G]nhor, [D/F#]digno de lou[Em7]vor\n[C9]Para sempre [D]Te louva[G]rei\n\n{section: Ponte}\n[Am7]Mesmo na tempes[G/B]tade eu vou con[C9]fiar\n[D]Tua promessa não vai fal[G]har\n"
+}

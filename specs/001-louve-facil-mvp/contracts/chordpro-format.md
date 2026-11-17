@@ -21,6 +21,10 @@ nota         := ("A"|"B"|"C"|"D"|"E"|"F"|"G") ("#"|"b")?
 - **Metatags** no topo: `{title: ...}`, `{key: ...}`, `{artist: ...}`.
   `title`/`artist` oficiais são as colunas; a metatag `{key}` serve de tom de
   referência quando a coluna `original_key` estiver vazia.
+  **Na prática:** o visualizador já mostra título, artista e tom no cabeçalho;
+  repetir essas metatags no conteúdo duplica a informação. Prefira preencher os
+  campos do formulário e deixar o `content` só com o corpo da cifra (seções,
+  acordes e letra).
 - **Seções da música** — duas formas equivalentes, ambas renderizadas como
   **badge destacado** (rótulo compacto com fundo e borda, ex.: `INTRO`,
   `VERSO 1`, `REFRÃO`) e não como alvo de transposição:

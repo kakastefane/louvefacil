@@ -93,13 +93,14 @@ export function renderSong(parsed: ParsedSong, options: RenderOptions = {}): Ren
         break
     }
   }
-  // No modo cantor, linhas só-de-acordes somem; seções mantêm só o rótulo
+  // No modo cantor, linhas só-de-acordes já foram descartadas acima; seções
+  // mantêm apenas o rótulo.
   return {
     title: parsed.title,
     artist: parsed.artist,
     key: parsed.key,
     displayedKey: parsed.key ? transposeKey(parsed.key, semitones) : null,
-    lines: lines.filter((line) => line.type !== 'chords'),
+    lines,
   }
 }
 

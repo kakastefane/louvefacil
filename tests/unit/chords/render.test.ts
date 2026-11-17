@@ -91,6 +91,21 @@ describe('renderSong com hideChords (modo cantor)', () => {
     if (section.type !== 'section') throw new Error('esperada seção')
     expect(section.chords.map((c) => c.label)).toEqual(['G', 'D'])
   })
+
+  it('sem hideChords mantém linhas só de acordes (intro/instrumental)', () => {
+    const parsed = parseChordPro('{section: Intro}\nG  D  Em\n\n{section: Verso 1}\n[G]Letra')
+    const rendered = renderSong(parsed, { semitones: 0 })
+    expect(rendered.lines.map((l) => l.type)).toEqual([
+      'section',
+      'chords',
+      'empty',
+      'section',
+      'lyric',
+    ])
+    const chords = rendered.lines[1]
+    if (chords.type !== 'chords') throw new Error('esperada linha de acordes')
+    expect(chords.chords.map((c) => c.label)).toEqual(['G', 'D', 'Em'])
+  })
 })
 
 describe('buildChordSegments', () => {

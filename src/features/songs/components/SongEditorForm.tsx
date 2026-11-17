@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, type ReactNode } from 'react'
 import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, X } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 import { ChordPreview } from '@/features/songs/components/ChordPreview'
+import { ThemeAutocomplete } from '@/features/songs/components/ThemeAutocomplete'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -23,7 +24,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
 import { normalizeThemes, isOnline } from '@/lib/utils'
 import type { SongDraft } from '@/types/domain'
 
@@ -104,6 +104,8 @@ interface SongEditorFormProps {
   preview?: ReactNode
   /** Chave do rascunho no localStorage; omitida desativa a persistência local. */
   draftKey?: string
+  /** Temas já existentes na equipe — alimentam as sugestões do autocomplete. */
+  availableThemes?: string[]
 }
 
 export function SongEditorForm({
@@ -114,6 +116,7 @@ export function SongEditorForm({
   submitLabel = 'Salvar cifra',
   preview,
   draftKey,
+  availableThemes = [],
 }: SongEditorFormProps) {
   const { control, handleSubmit, setValue, formState: { errors, isDirty } } = useForm<SongEditorFormValues>({
     resolver: zodResolver(songFormSchema) as unknown as Resolver<SongEditorFormValues>,
@@ -169,7 +172,6 @@ export function SongEditorForm({
 
   const content = useWatch({ control, name: 'content' }) ?? ''
   const themes = useWatch({ control, name: 'themes' }) ?? []
-  const [themeInput, setThemeInput] = useState('')
   const contentRef = useRef<HTMLTextAreaElement>(null)
 
   const handleContentKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -189,11 +191,8 @@ export function SongEditorForm({
     })
   }
 
-  const addTheme = () => {
-    const candidate = themeInput.trim()
-    if (!candidate) return
-    setValue('themes', normalizeThemes([...themes, candidate]), { shouldDirty: true, shouldValidate: true })
-    setThemeInput('')
+  const addTheme = (theme: string) => {
+    setValue('themes', normalizeThemes([...themes, theme]), { shouldDirty: true, shouldValidate: true })
   }
 
   const removeTheme = (theme: string) => {
@@ -292,20 +291,17 @@ export function SongEditorForm({
 
             <div className="space-y-1.5">
               <Label htmlFor="song-theme-input">Temas</Label>
-              <div className="flex gap-2">
-                <Input id="song-theme-input" value={themeInput} onChange={(e) => setThemeInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTheme() } }} placeholder="Ex.: Adoração" aria-label="Adicionar tema" />
-                <Button type="button" variant="outline" onClick={addTheme}>Adicionar</Button>
-              </div>
-              {themes.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {themes.map((theme) => (
-                    <Badge key={theme} variant="secondary" className="gap-1">
-                      {theme}
-                      <button type="button" onClick={() => removeTheme(theme)} aria-label={`Remover tema ${theme}`} className="rounded-full outline-none focus-visible:ring-2"><X className="h-3 w-3" /></button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
+              <ThemeAutocomplete
+                id="song-theme-input"
+                themes={themes}
+                availableThemes={availableThemes}
+                onAddTheme={addTheme}
+                onRemoveTheme={removeTheme}
+              />
+              <p className="text-xs text-muted-foreground">
+                Selecione um tema existente para evitar duplicidade ou digite um
+                novo.
+              </p>
             </div>
 
             <div className="flex flex-col gap-1.5">

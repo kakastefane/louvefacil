@@ -23,10 +23,12 @@ import {
   createSong,
   deleteSong,
   getSongById,
+  listSongs,
   updateSong,
 } from '@/features/songs/service'
 import { useTeam } from '@/features/teams/TeamContext'
 import { cn, friendlyErrorMessage } from '@/lib/utils'
+import { collectThemes } from '@/features/songs/filter'
 import type { Song } from '@/types/domain'
 
 /**
@@ -97,6 +99,28 @@ function SongEditorContent() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  // Temas já usados na equipe: base do autocomplete no campo de temas.
+  const [availableThemes, setAvailableThemes] = useState<string[]>([])
+  const teamId = activeTeam?.id
+
+  useEffect(() => {
+    if (!teamId) {
+      setAvailableThemes([])
+      return
+    }
+    let active = true
+    listSongs(teamId)
+      .then((songs) => {
+        if (active) setAvailableThemes(collectThemes(songs))
+      })
+      .catch(() => {
+        // Sem rede/erro: o campo continua aceitando temas digitados livremente.
+        if (active) setAvailableThemes([])
+      })
+    return () => {
+      active = false
+    }
+  }, [teamId])
 
   const loadSong = useCallback(async () => {
     if (!id) return
@@ -259,6 +283,7 @@ function SongEditorContent() {
             serverError={serverError}
             submitLabel={isEdit ? 'Salvar alterações' : 'Criar cifra'}
             draftKey={draftKey}
+            availableThemes={availableThemes}
           />
         </div>
       </>

@@ -46,3 +46,31 @@ export function collectThemes(songs: Song[]): string[] {
   }
   return [...seen.values()].sort((a, b) => a.localeCompare(b, 'pt-BR'))
 }
+
+/**
+ * Sugestões do autocomplete de temas: temas já existentes que contêm o texto
+ * digitado (case-insensitive), excluindo os já selecionados. Correspondências
+ * por prefixo vêm primeiro; empate resolvido em ordem alfabética PT-BR.
+ */
+export function suggestThemes(
+  availableThemes: string[],
+  selectedThemes: string[],
+  query: string,
+  limit = 8,
+): string[] {
+  const needle = themeKey(query)
+  if (!needle) return []
+  const selected = new Set(selectedThemes.map((theme) => themeKey(theme)))
+  return availableThemes
+    .filter((theme) => {
+      const key = themeKey(theme)
+      return !selected.has(key) && key.includes(needle)
+    })
+    .sort((a, b) => {
+      const aPrefix = themeKey(a).startsWith(needle) ? 0 : 1
+      const bPrefix = themeKey(b).startsWith(needle) ? 0 : 1
+      if (aPrefix !== bPrefix) return aPrefix - bPrefix
+      return a.localeCompare(b, 'pt-BR')
+    })
+    .slice(0, limit)
+}

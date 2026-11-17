@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { normalizeThemes, themeKey } from '@/lib/utils'
+import { suggestThemes } from '@/features/songs/filter'
 
 describe('normalização de temas (FR-018)', () => {
   it('remove espaços nas bordas e colapsa espaços internos', () => {
@@ -63,5 +64,46 @@ describe('chave canônica de tema (themeKey)', () => {
     expect(normalizeThemes(['Queima de João', '  QUEIMA  DE JOÃO'])).toEqual([
       'Queima de João',
     ])
+  })
+})
+
+describe('sugestões do autocomplete de temas', () => {
+  const existentes = ['Adoração', 'Natal', 'Santa Ceia', 'Ceia do Senhor']
+
+  it('retorna vazio quando o texto digitado é vazio ou só espaços', () => {
+    expect(suggestThemes(existentes, [], '')).toEqual([])
+    expect(suggestThemes(existentes, [], '   ')).toEqual([])
+  })
+
+  it('busca por substring ignorando maiúsculas/minúsculas', () => {
+    expect(suggestThemes(existentes, [], 'CEI')).toEqual([
+      'Ceia do Senhor',
+      'Santa Ceia',
+    ])
+  })
+
+  it('exclui temas já selecionados (comparação canônica)', () => {
+    expect(suggestThemes(existentes, ['NATAL'], 'a')).toEqual([
+      'Adoração',
+      'Ceia do Senhor',
+      'Santa Ceia',
+    ])
+  })
+
+  it('coloca correspondências por prefixo antes das demais', () => {
+    expect(suggestThemes(['Ceia do Senhor', 'Santa Ceia'], [], 'ceia')).toEqual([
+      'Ceia do Senhor',
+      'Santa Ceia',
+    ])
+  })
+
+  it('respeita o limite de sugestões', () => {
+    expect(suggestThemes(existentes, [], 'a', 2)).toHaveLength(2)
+  })
+
+  it('não muta o array de temas disponíveis', () => {
+    const entrada = ['Santa Ceia', 'Ceia do Senhor']
+    suggestThemes(entrada, [], 'ceia')
+    expect(entrada).toEqual(['Santa Ceia', 'Ceia do Senhor'])
   })
 })

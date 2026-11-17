@@ -136,6 +136,14 @@ function SortableItemRow({
   const removeBusy = busy === `remove:${item.id}`
   const rowBusy = transposeBusy || removeBusy
 
+  // Tom atual exibido no seletor (ex.: `A`) + desvio pequeno abaixo (`+2`),
+  // mesmo padrão do alterador de tom do modo tocar (ViewerControls).
+  const displayedKey = song?.original_key
+    ? transposeKey(song.original_key, item.transpose)
+    : null
+  const offsetLabel =
+    item.transpose === 0 ? null : transposeLabel(item.transpose)
+
   // Item órfão (cifra excluída antes da cascata propagar): linha desabilitada
   if (!song) {
     return (
@@ -211,14 +219,27 @@ function SortableItemRow({
             <Minus aria-hidden />
           </Button>
           <span
-            className="w-8 text-center text-sm font-semibold tabular-nums"
+            className="flex min-w-[4ch] flex-col items-center justify-center leading-none"
             aria-live="polite"
-            aria-label={`Desvio ${transposeLabel(item.transpose)} semitons`}
+            aria-label={
+              displayedKey
+                ? `Tom atual: ${displayedKey}${offsetLabel ? ` (desvio ${offsetLabel})` : ''}`
+                : `Desvio ${transposeLabel(item.transpose)} semitons`
+            }
           >
             {transposeBusy ? (
-              <Loader2 className="mx-auto h-4 w-4 animate-spin" aria-hidden />
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
             ) : (
-              transposeLabel(item.transpose)
+              <>
+                <span className="font-mono text-base font-bold tabular-nums">
+                  {displayedKey ?? transposeLabel(item.transpose)}
+                </span>
+                {displayedKey && offsetLabel ? (
+                  <span className="mt-0.5 text-[0.625rem] font-semibold text-muted-foreground">
+                    {offsetLabel}
+                  </span>
+                ) : null}
+              </>
             )}
           </span>
           <Button
@@ -233,8 +254,21 @@ function SortableItemRow({
           </Button>
         </div>
       ) : (
-        <Badge variant="secondary" className="shrink-0 tabular-nums">
-          Desvio {transposeLabel(item.transpose)}
+        <Badge variant="secondary" className="shrink-0 gap-1">
+          {displayedKey ? (
+            <>
+              <span className="font-mono font-semibold">{displayedKey}</span>
+              {offsetLabel ? (
+                <span className="text-[0.625rem] font-semibold text-muted-foreground">
+                  {offsetLabel}
+                </span>
+              ) : null}
+            </>
+          ) : (
+            <span className="tabular-nums">
+              Desvio {transposeLabel(item.transpose)}
+            </span>
+          )}
         </Badge>
       )}
 

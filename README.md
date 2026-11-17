@@ -46,18 +46,26 @@ Dexie (IndexedDB read-through) · vite-plugin-pwa (Workbox) · Vitest
 1. **Crie o projeto no Supabase** (região próxima, ex.: South America).
 2. **Authentication → Providers** → Email habilitado (confirmação de e-mail
    conforme sua preferência).
-3. **SQL Editor** → execute, em ordem:
+3. **Authentication → URL Configuration** (importante para os links de
+   confirmação e recuperação de senha):
+   - **Site URL**: a URL pública do app (ex.: `https://louvefacil.vercel.app`).
+   - **Redirect URLs**: adicione os ambientes usados, por exemplo
+     `https://louvefacil.vercel.app/**` e `http://localhost:5173/**`.
+   > Se o e-mail de confirmação abrir em `localhost` mesmo em produção, é
+   > porque o **Site URL** ainda aponta para o ambiente local ou a URL do app
+   > não está na lista de **Redirect URLs**.
+4. **SQL Editor** → execute, em ordem:
    `supabase/migrations/0001_schema.sql`, depois
    `supabase/migrations/0002_rls_policies.sql` e por fim
    `supabase/migrations/0003_bpm_meter.sql` (adiciona BPM e compasso às cifras).
-4. **Variáveis de ambiente**:
+5. **Variáveis de ambiente**:
    ```bash
    cp .env.example .env.local
    ```
    Preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`
    (Supabase → Settings → API).
    > Sem estas variáveis o app abre em modo "Projeto não configurado" (`/setup`).
-5. **Instale e rode**:
+6. **Instale e rode**:
    ```bash
    npm install
    npm run dev

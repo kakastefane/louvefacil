@@ -61,7 +61,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { name: name.trim() } },
+        options: {
+          data: { name: name.trim() },
+          // O e-mail de confirmação deve voltar para o app que a pessoa está
+          // usando (produção ou localhost). Sem isso o Supabase usa o "Site
+          // URL" do projeto e pode cair em localhost. Esse destino também
+          // precisa estar em Authentication → URL Configuration → Redirect
+          // URLs no painel do Supabase.
+          emailRedirectTo:
+            typeof window === 'undefined'
+              ? undefined
+              : `${window.location.origin}/biblioteca`,
+        },
       })
       if (error) throw error
       return { needsConfirmation: data.session === null }

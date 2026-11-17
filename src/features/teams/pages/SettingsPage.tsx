@@ -306,7 +306,7 @@ export function SettingsPage() {
     if (teamLoading) return <LoadingState fullScreen />
     if (!user) return <LoadingState fullScreen />
     return (
-      <div className="mx-auto w-full max-w-2xl px-4 py-12">
+      <div className="w-full">
         <EmptyState
           title="Você não faz parte de nenhuma equipe"
           description="Crie uma equipe ou entre pelo link de convite para acessar as configurações."
@@ -322,7 +322,7 @@ export function SettingsPage() {
     displayName.trim() === '' || displayName.trim() === activeMember.display_name
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-8">
+    <div className="w-full space-y-6">
       <header className="space-y-1">
         <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
         <p className="flex items-center gap-2 text-sm text-muted-foreground">

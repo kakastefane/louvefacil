@@ -68,7 +68,13 @@ export function AppShell({ children }: { children?: ReactNode }) {
       </aside>
 
       <main id="conteudo-principal" tabIndex={-1} className="flex-1 pb-20 lg:pb-0">
-        <div className="mx-auto w-full max-w-3xl px-4 py-4 lg:py-6">
+        {/*
+         * Único container de largura das páginas internas (Biblioteca, Setlists,
+         * Editor, Config…): a largura e o respiro horizontal vivem aqui. Não
+         * adicione `max-w-*`/`px-*` nos wrappers das páginas — isso faz cada
+         * tela ter uma largura diferente ao navegar.
+         */}
+        <div className="mx-auto w-full max-w-3xl px-4 py-6 lg:py-8">
           {children ?? <Outlet />}
         </div>
       </main>

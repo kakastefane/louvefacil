@@ -558,7 +558,7 @@ export function SetlistDetailPage() {
   // ---- Estados de carregamento / erro / inexistente -------------------------
   if (teamLoading || status === 'loading') {
     return (
-      <div className="mx-auto w-full max-w-4xl px-4 py-6 lg:py-8">
+      <div className="w-full">
         <LoadingState label="Carregando setlist…" />
       </div>
     )
@@ -566,7 +566,7 @@ export function SetlistDetailPage() {
 
   if (status === 'error') {
     return (
-      <div className="mx-auto w-full max-w-4xl px-4 py-6 lg:py-8">
+      <div className="w-full">
         <ErrorState
           message="Não foi possível carregar o setlist. Verifique sua conexão e tente novamente."
           onRetry={() => setReloadToken((token) => token + 1)}
@@ -577,7 +577,7 @@ export function SetlistDetailPage() {
 
   if (status === 'missing' || !setlist) {
     return (
-      <div className="mx-auto w-full max-w-4xl px-4 py-6 lg:py-8">
+      <div className="w-full">
         <EmptyState
           icon={<Music className="h-8 w-8" aria-hidden />}
           title="Setlist não encontrado"
@@ -613,7 +613,7 @@ export function SetlistDetailPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-6 lg:py-8">
+    <div className="w-full">
       {/* Cabeçalho */}
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">

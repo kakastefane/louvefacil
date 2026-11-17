@@ -165,7 +165,7 @@ export function TeamsPage() {
 
   if (loadError) {
     return (
-      <div className="space-y-6">
+      <div className="w-full space-y-6">
         <header>
           <h1 className="text-2xl font-bold tracking-tight">Equipes</h1>
           <p className="text-sm text-muted-foreground">
@@ -184,7 +184,7 @@ export function TeamsPage() {
   const hasTeams = memberships.length > 0
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Equipes</h1>

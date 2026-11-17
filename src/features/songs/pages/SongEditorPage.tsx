@@ -291,7 +291,7 @@ function SongEditorContent() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-6 lg:py-8">
+    <div className="w-full">
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <Link

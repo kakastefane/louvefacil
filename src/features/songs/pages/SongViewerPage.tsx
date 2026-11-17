@@ -125,7 +125,7 @@ export function SongViewerPage() {
   }
 
   return (
-    <div className="flex h-full min-h-[60vh] flex-col">
+    <div className="flex h-full min-h-[60vh] w-full flex-col">
       <header className="mb-2 flex shrink-0 items-center justify-between gap-3">
         <Link
           to="/biblioteca"

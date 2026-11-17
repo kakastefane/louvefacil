@@ -288,7 +288,7 @@ export function PlayModePage() {
     <div
       role="region"
       aria-label="Modo tocar"
-      className="flex h-full min-h-[70vh] flex-col"
+      className="flex h-full min-h-[70vh] w-full flex-col"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >

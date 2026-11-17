@@ -1,6 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { Loader2, Music, Pencil, Plus, Search, SearchX, Trash2 } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Music,
+  Pencil,
+  Plus,
+  Search,
+  SearchX,
+  Trash2,
+} from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -24,12 +34,45 @@ import {
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states'
 import { listSongs, deleteSong } from '@/features/songs/service'
 import { filterSongs, collectThemes } from '@/features/songs/filter'
+import {
+  PAGE_SIZE_OPTIONS,
+  clampPage,
+  paginate,
+  totalPages,
+  type PageSize,
+} from '@/features/songs/pagination'
 import { useTeam } from '@/features/teams/TeamContext'
 import { canEdit } from '@/types/domain'
 import { friendlyErrorMessage, themeKey } from '@/lib/utils'
 import type { Song } from '@/types/domain'
 
 type LoadStatus = 'loading' | 'ready' | 'error'
+
+const PAGE_SIZE_STORAGE_KEY = 'louve-facil:library-page-size'
+/** Padrão: 25 por página (mostra bibliotecas pequenas inteiras). */
+const DEFAULT_PAGE_SIZE: PageSize = 25
+
+/** Itens por página persistido no dispositivo (`localStorage`). */
+function loadPageSize(): PageSize {
+  try {
+    const raw = localStorage.getItem(PAGE_SIZE_STORAGE_KEY)
+    if (raw === 'all') return 'all'
+    const parsed = Number.parseInt(raw ?? '', 10)
+    return (PAGE_SIZE_OPTIONS as readonly number[]).includes(parsed)
+      ? (parsed as PageSize)
+      : DEFAULT_PAGE_SIZE
+  } catch {
+    return DEFAULT_PAGE_SIZE
+  }
+}
+
+function savePageSize(size: PageSize): void {
+  try {
+    localStorage.setItem(PAGE_SIZE_STORAGE_KEY, String(size))
+  } catch {
+    // armazenamento indisponível: mantém apenas em memória
+  }
+}
 
 /** Mensagem amigável de erro de exclusão (services já lançam PT-BR). */
 function describeDeleteError(error: unknown): string {
@@ -38,8 +81,8 @@ function describeDeleteError(error: unknown): string {
 
 /**
  * Biblioteca de cifras (T036): listagem com busca (debounce ~200ms),
- * filtro por tema via chips e exclusão com confirmação (T034).
- * Dono/editor veem as ações de escrita; membros só consultam (FR-029).
+ * filtros por tema e itens por página (dropdowns) e exclusão com confirmação
+ * (T034). Dono/editor veem as ações de escrita; membros só consultam (FR-029).
  */
 export function LibraryPage() {
   const navigate = useNavigate()
@@ -54,6 +97,9 @@ export function LibraryPage() {
   const [debouncedQuery, setDebouncedQuery] = useState('')
   // forma canônica do tema (themeKey) — o filterSongs também normaliza
   const [activeTheme, setActiveTheme] = useState<string | null>(null)
+  const [pageSize, setPageSize] = useState<PageSize>(loadPageSize)
+  const [page, setPage] = useState(1)
+  const listRef = useRef<HTMLUListElement>(null)
 
   const [pendingDelete, setPendingDelete] = useState<Song | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -95,6 +141,11 @@ export function LibraryPage() {
     query: debouncedQuery,
     theme: activeTheme,
   })
+  const pageCount = totalPages(visibleSongs.length, pageSize)
+  const currentPage = clampPage(page, visibleSongs.length, pageSize)
+  const pageSongs = paginate(visibleSongs, currentPage, pageSize)
+  const pageStart = pageSize === 'all' ? 0 : (currentPage - 1) * pageSize
+  const showPagination = pageSize !== 'all' && visibleSongs.length > pageSize
   const hasActiveFilters =
     debouncedQuery.trim().length > 0 || activeTheme !== null
 
@@ -102,6 +153,22 @@ export function LibraryPage() {
     setQuery('')
     setDebouncedQuery('')
     setActiveTheme(null)
+    setPage(1)
+  }
+
+  function handlePageSizeChange(value: string) {
+    const next: PageSize =
+      value === 'all' ? 'all' : (Number(value) as PageSize)
+    setPageSize(next)
+    savePageSize(next)
+    setPage(1)
+  }
+
+  function goToPage(next: number) {
+    setPage(clampPage(next, visibleSongs.length, pageSize))
+    requestAnimationFrame(() => {
+      listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
   }
 
   async function handleConfirmDelete() {
@@ -176,69 +243,114 @@ export function LibraryPage() {
     }
 
     return (
-      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {visibleSongs.map((song) => {
-          return (
-            <li key={song.id}>
-              <Card className="flex h-full items-stretch overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => navigate(`/cifra/${song.id}`)}
-                  aria-label={`Abrir cifra ${song.title}`}
-                  className="flex-1 rounded-l-xl p-4 text-left outline-none transition-colors hover:bg-accent/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                >
-                  <span className="block font-medium leading-snug">
-                    {song.title}
-                  </span>
-                  {song.artist ? (
-                    <span className="mt-0.5 block text-sm text-muted-foreground">
-                      {song.artist}
+      <>
+        <ul
+          ref={listRef}
+          className="grid scroll-mt-24 gap-3 sm:grid-cols-2"
+        >
+          {pageSongs.map((song) => {
+            return (
+              <li key={song.id}>
+                <Card className="flex h-full items-stretch overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/cifra/${song.id}`)}
+                    aria-label={`Abrir cifra ${song.title}`}
+                    className="flex-1 rounded-l-xl p-4 text-left outline-none transition-colors hover:bg-accent/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                  >
+                    <span className="block font-medium leading-snug">
+                      {song.title}
                     </span>
+                    {song.artist ? (
+                      <span className="mt-0.5 block text-sm text-muted-foreground">
+                        {song.artist}
+                      </span>
+                    ) : null}
+                    {song.original_key || song.bpm !== null || song.time_signature ? (
+                      <span className="mt-3 flex flex-wrap items-center gap-1.5" aria-label="Tom, andamento e compasso">
+                        {song.original_key ? (
+                          <Badge variant="outline">Tom: {song.original_key}</Badge>
+                        ) : null}
+                        {song.bpm !== null ? (
+                          <Badge variant="outline" aria-label={`Andamento de ${song.bpm} BPM`}>
+                            ♩ = {song.bpm}
+                          </Badge>
+                        ) : null}
+                        {song.time_signature ? (
+                          <Badge variant="outline" aria-label={`Compasso ${song.time_signature}`}>
+                            {song.time_signature}
+                          </Badge>
+                        ) : null}
+                      </span>
+                    ) : null}
+                  </button>
+                  {editable ? (
+                    <div className="flex flex-col items-center gap-1 self-stretch border-l p-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => navigate(`/cifra/${song.id}/editar`)}
+                        aria-label={`Editar cifra ${song.title}`}
+                      >
+                        <Pencil aria-hidden />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => openDeleteDialog(song)}
+                        aria-label={`Excluir cifra ${song.title}`}
+                      >
+                        <Trash2 aria-hidden />
+                      </Button>
+                    </div>
                   ) : null}
-                  {song.original_key || song.bpm !== null || song.time_signature ? (
-                    <span className="mt-3 flex flex-wrap items-center gap-1.5" aria-label="Tom, andamento e compasso">
-                      {song.original_key ? (
-                        <Badge variant="outline">Tom: {song.original_key}</Badge>
-                      ) : null}
-                      {song.bpm !== null ? (
-                        <Badge variant="outline" aria-label={`Andamento de ${song.bpm} BPM`}>
-                          ♩ = {song.bpm}
-                        </Badge>
-                      ) : null}
-                      {song.time_signature ? (
-                        <Badge variant="outline" aria-label={`Compasso ${song.time_signature}`}>
-                          {song.time_signature}
-                        </Badge>
-                      ) : null}
-                    </span>
-                  ) : null}
-                </button>
-                {editable ? (
-                  <div className="flex flex-col items-center gap-1 self-stretch border-l p-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => navigate(`/cifra/${song.id}/editar`)}
-                      aria-label={`Editar cifra ${song.title}`}
-                    >
-                      <Pencil aria-hidden />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() => openDeleteDialog(song)}
-                      aria-label={`Excluir cifra ${song.title}`}
-                    >
-                      <Trash2 aria-hidden />
-                    </Button>
-                  </div>
-                ) : null}
-              </Card>
-            </li>
-          )
-        })}
-      </ul>
+                </Card>
+              </li>
+            )
+          })}
+        </ul>
+
+        {showPagination ? (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground" role="status" aria-live="polite">
+              Mostrando {pageStart + 1}–{pageStart + pageSongs.length} de{' '}
+              {visibleSongs.length}
+            </p>
+            <nav
+              aria-label="Paginação da biblioteca"
+              className="flex items-center gap-2"
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage <= 1}
+                aria-label="Página anterior"
+              >
+                <ChevronLeft aria-hidden />
+                Anterior
+              </Button>
+              <span
+                className="min-w-[9ch] text-center text-sm font-medium tabular-nums"
+                aria-label={`Página ${currentPage} de ${pageCount}`}
+              >
+                {currentPage} de {pageCount}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage >= pageCount}
+                aria-label="Próxima página"
+              >
+                Próxima
+                <ChevronRight aria-hidden />
+              </Button>
+            </nav>
+          </div>
+        ) : null}
+      </>
     )
   }
 
@@ -271,7 +383,10 @@ export function LibraryPage() {
               <Input
                 type="search"
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event) => {
+                  setQuery(event.target.value)
+                  setPage(1)
+                }}
                 placeholder="Buscar por título ou artista…"
                 aria-label="Buscar cifra por título ou artista"
                 className="pl-9"
@@ -280,7 +395,10 @@ export function LibraryPage() {
 
             <Select
               value={activeTheme ?? ''}
-              onValueChange={(value) => setActiveTheme(value === '' ? null : value)}
+              onValueChange={(value) => {
+                setActiveTheme(value === '' ? null : value)
+                setPage(1)
+              }}
             >
               <SelectTrigger className="w-44">
                 <SelectValue placeholder="Filtrar por tema" />
@@ -295,6 +413,20 @@ export function LibraryPage() {
                     </SelectItem>
                   )
                 })}
+              </SelectContent>
+            </Select>
+
+            <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
+              <SelectTrigger className="w-44" aria-label="Itens por página">
+                <SelectValue placeholder="Itens por página" />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size} por página
+                  </SelectItem>
+                ))}
+                <SelectItem value="all">Sem paginação</SelectItem>
               </SelectContent>
             </Select>
           </div>

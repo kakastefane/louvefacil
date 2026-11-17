@@ -7,6 +7,13 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -20,7 +27,6 @@ import { filterSongs, collectThemes } from '@/features/songs/filter'
 import { useTeam } from '@/features/teams/TeamContext'
 import { canEdit } from '@/types/domain'
 import { friendlyErrorMessage, themeKey } from '@/lib/utils'
-import { cn } from '@/lib/utils'
 import type { Song } from '@/types/domain'
 
 type LoadStatus = 'loading' | 'ready' | 'error'
@@ -253,56 +259,45 @@ export function LibraryPage() {
         ) : null}
       </header>
 
-      {/* Busca + chips de tema (só quando há conteúdo ou filtros ativos) */}
+      {/* Busca + filtro por tema lado a lado */}
       {!teamLoading && status === 'ready' && songs.length > 0 ? (
         <div className="mb-4 space-y-3">
-          <div className="relative max-w-md">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden
-            />
-            <Input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar por título ou artista…"
-              aria-label="Buscar cifra por título ou artista"
-              className="pl-9"
-            />
-          </div>
-
-          {themes.length > 0 ? (
-            <div
-              className="flex flex-wrap gap-2"
-              role="group"
-              aria-label="Filtrar por tema"
-            >
-              <Button
-                size="sm"
-                variant={activeTheme === null ? 'default' : 'outline'}
-                onClick={() => setActiveTheme(null)}
-                aria-pressed={activeTheme === null}
-              >
-                Todos
-              </Button>
-              {themes.map((theme) => {
-                const key = themeKey(theme)
-                const active = activeTheme === key
-                return (
-                  <Button
-                    key={key}
-                    size="sm"
-                    variant={active ? 'default' : 'outline'}
-                    onClick={() => setActiveTheme(active ? null : key)}
-                    aria-pressed={active}
-                    className={cn(active && 'shadow-sm')}
-                  >
-                    {theme}
-                  </Button>
-                )
-              })}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative max-w-md flex-1 min-w-0">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
+              <Input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Buscar por título ou artista…"
+                aria-label="Buscar cifra por título ou artista"
+                className="pl-9"
+              />
             </div>
-          ) : null}
+
+            <Select
+              value={activeTheme ?? ''}
+              onValueChange={(value) => setActiveTheme(value === '' ? null : value)}
+            >
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="Filtrar por tema" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos</SelectItem>
+                {themes.map((theme) => {
+                  const key = themeKey(theme)
+                  return (
+                    <SelectItem key={key} value={key}>
+                      {theme}
+                    </SelectItem>
+                  )
+                })}
+              </SelectContent>
+            </Select>
+          </div>
 
           {hasActiveFilters ? (
             <p className="text-xs text-muted-foreground" role="status">

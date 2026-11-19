@@ -15,8 +15,9 @@ modo tocar — funcionando offline no celular do culto.
   7 dias, revogável); isolamento de dados por equipe no banco (RLS).
 - **Cifra padronizada (ChordPro)** — editor com validação, acordes `[Am]`
   inline, linhas só de acordes, metatags `{key: …}`, pré-visualização ao vivo,
-  importação do JSON gerado pela skill de conversão; editor/dono criam e
-  excluem; membros apenas leem.
+  importação do JSON gerado pela skill de conversão com o **mesmo validador do
+  script** — erros/avisos aparecem na tela e o relatório pode ser copiado para
+  enviar ao agente; editor/dono criam e excluem; membros apenas leem.
 - **Biblioteca** — busca instantânea por título/artista, filtro por tema
   (chips), ordenação alfabética, atalho para criar cifra.
 - **Visualizador** — leitura confortável, transposição em semitons sem alterar
@@ -110,7 +111,7 @@ em `specs/001-louve-facil-mvp/quickstart.md` (S1–S5) no domínio publicado.
 ## Validação e qualidade
 
 - `npm run lint` — limpo
-- `npm test` — 129 testes de unidade (parser/transpõe/filtro/posições/temas)
+- `npm test` — testes de unidade (parser, transposição, filtro, posições, temas, importação e validador de cifras)
 - `npm run build` — build verde (PWA gerado em `dist/`)
 - Roteiro completo de validação manual: [`specs/001-louve-facil-mvp/quickstart.md`](specs/001-louve-facil-mvp/quickstart.md)
   (inclui revisão de RLS e plano de testes com duas equipes reais)

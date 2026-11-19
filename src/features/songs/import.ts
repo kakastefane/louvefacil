@@ -1,6 +1,11 @@
 import { parseChordPro } from '@/features/chords/parser'
 import { normalizeThemes } from '@/lib/utils'
 import { normalizeSongKey, type SongKey } from '@/features/songs/keys'
+import {
+  formatCifraReport,
+  validateCifra,
+  type CifraValidation,
+} from '@/features/songs/validation'
 
 /**
  * Importação do JSON gerado pela skill `cifras-chordpro` para os campos do
@@ -50,6 +55,15 @@ export interface SongImportResult {
   values: ImportedSongValues
   /** Pontos para a pessoa revisar antes de salvar (não impedem a importação). */
   warnings: string[]
+  /** Ajustes automáticos de metadados (tom, BPM, temas) aplicados ao formulário. */
+  adjustments: string[]
+  /**
+   * Relatório do validador da skill (o mesmo do script). Erros não bloqueiam
+   * o preenchimento, mas indicam que o JSON precisa ser corrigido no agente.
+   */
+  validation: CifraValidation
+  /** Relatório em texto, pronto para copiar e enviar ao agente. */
+  report: string
 }
 
 /** Erro de importação: um ou mais motivos que impedem preencher os campos. */
@@ -152,6 +166,12 @@ export function parseSongJson(raw: string): SongImportResult {
 
   const issues: string[] = []
   const warnings: string[] = []
+  const adjustments: string[] = []
+  /** Ajuste de metadado: aparece nos avisos e no bloco de ajustes da tela. */
+  const adjust = (message: string) => {
+    warnings.push(message)
+    adjustments.push(message)
+  }
 
   const title =
     typeof data.title === 'string' ? data.title.trim() : ''
@@ -164,7 +184,7 @@ export function parseSongJson(raw: string): SongImportResult {
   let artist = ''
   if (data.artist != null) {
     if (typeof data.artist !== 'string') {
-      warnings.push('O campo "artist" deveria ser texto ou null — foi ignorado.')
+      adjust('O campo "artist" deveria ser texto ou null — foi ignorado.')
     } else {
       artist = data.artist.trim()
       if (artist.length > ARTIST_MAX) {
@@ -181,17 +201,17 @@ export function parseSongJson(raw: string): SongImportResult {
     originalKey = normalized.key
     const rawKey = String(data.original_key).trim()
     if (!normalized.key) {
-      warnings.push(
+      adjust(
         `Tom original "${rawKey}" não reconhecido — deixado em branco; escolha manualmente.`,
       )
     } else {
       if (normalized.converted) {
-        warnings.push(
+        adjust(
           `Tom "${rawKey}" convertido para "${normalized.key}" (grafia do seletor).`,
         )
       }
       if (normalized.droppedSuffix) {
-        warnings.push(
+        adjust(
           `Tom "${rawKey}" importado como "${normalized.key}": o seletor guarda só a raiz; o sufixo "${normalized.droppedSuffix}" fica nos acordes.`,
         )
       }
@@ -207,9 +227,9 @@ export function parseSongJson(raw: string): SongImportResult {
           ? Number(data.bpm)
           : Number.NaN
     if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
-      warnings.push('BPM inválido (precisa ser um número inteiro) — deixado em branco.')
+      adjust('BPM inválido (precisa ser um número inteiro) — deixado em branco.')
     } else if (parsed < BPM_MIN || parsed > BPM_MAX) {
-      warnings.push(
+      adjust(
         `BPM ${parsed} fora da faixa ${BPM_MIN}–${BPM_MAX} — deixado em branco.`,
       )
     } else {
@@ -220,13 +240,13 @@ export function parseSongJson(raw: string): SongImportResult {
   let timeSignature: string | null = null
   if (data.time_signature != null) {
     if (typeof data.time_signature !== 'string') {
-      warnings.push('Compasso inválido — deixado em branco; escolha manualmente.')
+      adjust('Compasso inválido — deixado em branco; escolha manualmente.')
     } else {
       const meter = data.time_signature.trim()
       if (VALID_METERS.has(meter)) {
         timeSignature = meter
       } else {
-        warnings.push(
+        adjust(
           `Compasso "${meter}" não suportado — deixado em branco; escolha manualmente.`,
         )
       }
@@ -236,20 +256,20 @@ export function parseSongJson(raw: string): SongImportResult {
   let themes: string[] = []
   if (data.themes != null) {
     if (!Array.isArray(data.themes)) {
-      warnings.push('O campo "themes" deveria ser uma lista — foi ignorado.')
+      adjust('O campo "themes" deveria ser uma lista — foi ignorado.')
     } else {
       const rawThemes = data.themes.filter(
         (theme): theme is string => typeof theme === 'string',
       )
       if (rawThemes.length !== data.themes.length) {
-        warnings.push('Alguns temas não eram texto e foram ignorados.')
+        adjust('Alguns temas não eram texto e foram ignorados.')
       }
       themes = normalizeThemes(rawThemes)
       if (themes.length !== rawThemes.length) {
-        warnings.push('Havia temas vazios ou duplicados; eles foram unificados.')
+        adjust('Havia temas vazios ou duplicados; eles foram unificados.')
       }
       if (themes.length > MAX_RECOMMENDED_THEMES) {
-        warnings.push(
+        adjust(
           `A cifra veio com ${themes.length} temas (o recomendado é até ${MAX_RECOMMENDED_THEMES}).`,
         )
       }
@@ -269,6 +289,8 @@ export function parseSongJson(raw: string): SongImportResult {
 
   if (issues.length > 0) throw new SongImportError(issues)
 
+  const validation = validateCifra(json)
+
   return {
     values: {
       title,
@@ -280,5 +302,8 @@ export function parseSongJson(raw: string): SongImportResult {
       content,
     },
     warnings,
+    adjustments,
+    validation,
+    report: formatCifraReport(json, validation),
   }
 }

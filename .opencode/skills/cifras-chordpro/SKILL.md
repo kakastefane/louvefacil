@@ -193,7 +193,9 @@ G7M  D/F#  A7(4)                →  Gmaj7  D/F#  A7sus4   (preferível)
    Corrija todos os `ERRO`. Revise cada `AVISO` — em especial linhas longas com
    vários acordes, que costumam indicar versos juntados. Confira a prévia
    impressa: acordes devem cair sobre a sílaba certa e cada seção deve virar um
-   badge.
+   badge. O app usa **o mesmo validador** ao importar o JSON: se não puder rodar
+   o script, importe na tela **Nova cifra** e use **Copiar relatório** para
+   enviar os erros/avisos ao agente.
 8. **Duplicidade**: procure na biblioteca por título (sem acentos,
    minúsculas) e artista. Se existir, **não crie**; reporte e pare (a menos que
    o pedido seja explicitamente “atualizar”).

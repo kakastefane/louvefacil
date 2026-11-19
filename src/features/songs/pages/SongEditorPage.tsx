@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { ArrowLeft, FileJson, Loader2, Trash2, TriangleAlert } from 'lucide-react'
+import { ArrowLeft, Check, CircleAlert, Copy, FileJson, Loader2, Trash2, TriangleAlert, Wrench } from 'lucide-react'
 
 import { RequireEditor } from '@/app/guards'
 import { Button } from '@/components/ui/button'
@@ -42,7 +42,14 @@ type ImportFeedback =
       kind: 'success'
       fileName: string
       values: ImportedSongValues
+      /** Erros do validador da skill (o mesmo do script). */
+      errors: string[]
+      /** Avisos do validador. */
       warnings: string[]
+      /** Ajustes automáticos aplicados aos campos (tom, BPM, temas). */
+      adjustments: string[]
+      /** Relatório completo em texto para copiar e enviar ao agente. */
+      report: string
     }
   | { kind: 'error'; fileName: string; issues: string[] }
 
@@ -126,6 +133,9 @@ function SongEditorContent() {
   const [importFeedback, setImportFeedback] = useState<ImportFeedback | null>(
     null,
   )
+  const [copyReportState, setCopyReportState] = useState<
+    'idle' | 'copied' | 'error'
+  >('idle')
 
   useEffect(() => {
     if (!teamId) {
@@ -228,6 +238,7 @@ function SongEditorContent() {
     }
 
     setImporting(true)
+    setCopyReportState('idle')
     try {
       const result = parseSongJson(await file.text())
       setImportedValues(result.values)
@@ -238,7 +249,10 @@ function SongEditorContent() {
         kind: 'success',
         fileName: file.name,
         values: result.values,
-        warnings: result.warnings,
+        errors: result.validation.errors,
+        warnings: result.validation.warnings,
+        adjustments: result.adjustments,
+        report: `Arquivo: ${file.name}\n${result.report}`,
       })
     } catch (error) {
       setImportFeedback({
@@ -251,6 +265,17 @@ function SongEditorContent() {
       })
     } finally {
       setImporting(false)
+    }
+  }
+
+  /** Copia o relatório do validador para a pessoa enviar ao agente. */
+  async function handleCopyReport() {
+    if (!importFeedback || importFeedback.kind !== 'success') return
+    try {
+      await navigator.clipboard.writeText(importFeedback.report)
+      setCopyReportState('copied')
+    } catch {
+      setCopyReportState('error')
     }
   }
 
@@ -476,17 +501,22 @@ function SongEditorContent() {
       <Dialog
         open={importFeedback !== null}
         onOpenChange={(open) => {
-          if (!open) setImportFeedback(null)
+          if (!open) {
+            setImportFeedback(null)
+            setCopyReportState('idle')
+          }
         }}
       >
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           {importFeedback?.kind === 'success' ? (
             <>
               <DialogHeader>
                 <DialogTitle>Cifra importada</DialogTitle>
                 <DialogDescription>
                   Os campos foram preenchidos com “{importFeedback.fileName}”.
-                  Confira os dados e os avisos antes de salvar.
+                  {importFeedback.errors.length > 0
+                    ? ' O validador encontrou erros — copie o relatório e envie ao agente antes de salvar.'
+                    : ' Confira os dados e os avisos antes de salvar.'}
                 </DialogDescription>
               </DialogHeader>
 
@@ -514,6 +544,32 @@ function SongEditorContent() {
                 </dd>
               </dl>
 
+              {importFeedback.errors.length > 0 ? (
+                <div
+                  role="alert"
+                  className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                >
+                  <p className="flex items-center gap-1.5 font-medium">
+                    <CircleAlert className="h-4 w-4" aria-hidden />
+                    {importFeedback.errors.length} erro(s) de validação
+                  </p>
+                  <ul className="mt-1 list-disc space-y-1 pl-5">
+                    {importFeedback.errors.map((message, index) => (
+                      <li key={index}>{message}</li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-xs">
+                    Copie o relatório e peça ao agente para corrigir o JSON.
+                    Depois importe o arquivo corrigido.
+                  </p>
+                </div>
+              ) : (
+                <p className="flex items-center gap-1.5 text-sm text-emerald-700 dark:text-emerald-400">
+                  <Check className="h-4 w-4" aria-hidden />
+                  Validador: nenhum erro.
+                </p>
+              )}
+
               {importFeedback.warnings.length > 0 ? (
                 <div
                   role="status"
@@ -521,7 +577,7 @@ function SongEditorContent() {
                 >
                   <p className="flex items-center gap-1.5 font-medium">
                     <TriangleAlert className="h-4 w-4" aria-hidden />
-                    Revise antes de salvar
+                    {importFeedback.warnings.length} aviso(s) do validador
                   </p>
                   <ul className="mt-1 list-disc space-y-1 pl-5">
                     {importFeedback.warnings.map((warning, index) => (
@@ -529,13 +585,61 @@ function SongEditorContent() {
                     ))}
                   </ul>
                 </div>
-              ) : (
+              ) : null}
+
+              {importFeedback.adjustments.length > 0 ? (
+                <details className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
+                  <summary className="flex cursor-pointer items-center gap-1.5 font-medium">
+                    <Wrench className="h-4 w-4" aria-hidden />
+                    Ajustes aplicados aos campos (
+                    {importFeedback.adjustments.length})
+                  </summary>
+                  <ul className="mt-1 list-disc space-y-1 pl-5 text-muted-foreground">
+                    {importFeedback.adjustments.map((adjustment, index) => (
+                      <li key={index}>{adjustment}</li>
+                    ))}
+                  </ul>
+                </details>
+              ) : null}
+
+              {importFeedback.errors.length === 0 &&
+              importFeedback.warnings.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   Nenhum aviso automático. Confira a prévia ao lado e salve.
                 </p>
-              )}
+              ) : null}
 
-              <DialogFooter>
+              {copyReportState === 'error' ? (
+                <p role="alert" className="text-sm text-destructive">
+                  Não foi possível copiar automaticamente. Selecione o texto do
+                  relatório e copie manualmente.
+                </p>
+              ) : null}
+
+              <DialogFooter className="flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setImportFeedback(null)
+                    importInputRef.current?.click()
+                  }}
+                >
+                  Escolher outro arquivo
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => void handleCopyReport()}
+                  disabled={copyReportState === 'copied'}
+                >
+                  {copyReportState === 'copied' ? (
+                    <Check aria-hidden />
+                  ) : (
+                    <Copy aria-hidden />
+                  )}
+                  {copyReportState === 'copied'
+                    ? 'Relatório copiado'
+                    : 'Copiar relatório'}
+                </Button>
                 <Button onClick={() => setImportFeedback(null)}>
                   Revisar campos
                 </Button>

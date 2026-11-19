@@ -220,6 +220,15 @@ function validateChords(content: string): void {
   const parsed = parseChordPro(content)
   for (const [index, line] of parsed.lines.entries()) {
     if (line.type !== 'lyric') continue
+
+    // Linha longa com muitos acordes costuma ser sinal de versos juntados na
+    // conversão (cada verso da fonte deve continuar em sua própria linha).
+    if (line.text.length > 60 && line.chords.length >= 3) {
+      warn(
+        `Linha de letra ${index + 1}: ${line.chords.length} acordes em ${line.text.length} caracteres — confira se você não juntou versos da fonte na mesma linha.`,
+      )
+    }
+
     for (const slot of line.chords) {
       if (!isChordToken(slot.chord.trim()))
         warn(

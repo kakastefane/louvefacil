@@ -131,7 +131,13 @@ Sites costumam trazer a linha de acordes acima da letra, alinhada por coluna
 ### Letra
 
 - Preserve a ordem, a grafia, os acentos e a pontuação da fonte.
-- Uma linha da fonte = uma linha de letra. Não junte nem quebre versos.
+- **Uma linha da fonte = uma linha de letra. Nunca junte versos.** Mesmo que
+  caibam na mesma linha, cada verso da fonte continua em sua própria linha:
+  `[C]Rei do meu coração [Am]Seja o monte que percorro` é **erro**; o correto é
+  `[C]Rei do meu coração` em uma linha e `[Am]Seja o monte que percorro` na
+  seguinte.
+- Não junte nem quebre versos. Se a fonte estiver sem quebras (letra corrida),
+  use as quebras da versão oficial da letra, não as dos períodos.
 - Sem indentação no começo da linha (o espaço é renderizado).
 - Não use Markdown (`**`, `#`, listas), emojis ou HTML.
 - Letra sem acordes é permitida (renderiza só o texto).
@@ -174,24 +180,31 @@ G7M  D/F#  A7(4)                →  Gmaj7  D/F#  A7sus4   (preferível)
    final na ordem da música.
 4. **Acordes**: converta linhas alinhadas para inline por coluna (algoritmo
    acima). Preserve o tom da fonte, salvo capotraste (item anterior).
-5. **Limpeza**: aplique a tabela “O que remover”.
-6. **Valide** (obrigatório):
+5. **Fidelidade de linhas** (obrigatório): conte as linhas de letra da fonte e
+   da saída — devem ser iguais, descontando apenas tablaturas/anúncios
+   removidos. Se a saída tiver menos linhas, você juntou versos: separe cada
+   verso na própria linha e reancore os acordes. Confira também cada acorde
+   contra a coluna/sílaba original; não redistribua acordes “a olho”.
+6. **Limpeza**: aplique a tabela “O que remover”.
+7. **Valide** (obrigatório):
    ```bash
    npx vite-node scripts/validate-cifra.ts caminho/para/cifra.json
    ```
-   Corrija todos os `ERRO`. Revise cada `AVISO`. Confira a prévia impressa:
-   acordes devem cair sobre a sílaba certa e cada seção deve virar um badge.
-7. **Duplicidade**: procure na biblioteca por título (sem acentos,
+   Corrija todos os `ERRO`. Revise cada `AVISO` — em especial linhas longas com
+   vários acordes, que costumam indicar versos juntados. Confira a prévia
+   impressa: acordes devem cair sobre a sílaba certa e cada seção deve virar um
+   badge.
+8. **Duplicidade**: procure na biblioteca por título (sem acentos,
    minúsculas) e artista. Se existir, **não crie**; reporte e pare (a menos que
    o pedido seja explicitamente “atualizar”).
-8. **Cadastro**: na tela **Nova cifra**, use **Importar JSON** para selecionar o
+9. **Cadastro**: na tela **Nova cifra**, use **Importar JSON** para selecionar o
    arquivo validado — os campos do formulário são preenchidos e você confere
    antes de salvar. Também é possível preencher manualmente. Offline não
    permite escrita.
-9. **Conferência no app**: abra a cifra e verifique badges, alinhamento, modo
-   cantor (só letra) e transposição ±2. O texto-fonte não pode mudar ao
-   transpor.
-10. **Relatório final** (fora do conteúdo): título, artista, tom, temas, número
+10. **Conferência no app**: abra a cifra e verifique badges, alinhamento, modo
+    cantor (só letra) e transposição ±2. O texto-fonte não pode mudar ao
+    transpor.
+11. **Relatório final** (fora do conteúdo): título, artista, tom, temas, número
     de seções, fonte usada, capotraste tratado, itens removidos (tabs etc.) e
     dúvidas.
 
@@ -204,6 +217,7 @@ G7M  D/F#  A7(4)                →  Gmaj7  D/F#  A7sus4   (preferível)
 - [ ] toda seção em `{section: …}` (ou `[Rótulo]` sem letra na linha)
 - [ ] nenhuma letra na mesma linha de um rótulo entre colchetes
 - [ ] acordes inline colados à sílaba, sem espaço após `]`
+- [ ] cada verso da fonte em sua própria linha (nenhuma linha longa com 3+ acordes)
 - [ ] linhas só de acordes sem `|`, `%`, `N.C.` ou texto
 - [ ] sem metatags de título/artista/tom no conteúdo
 - [ ] sem tabs, HTML, entidades HTML, Markdown ou emojis

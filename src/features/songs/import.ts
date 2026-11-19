@@ -111,6 +111,20 @@ function collectContentWarnings(content: string, warnings: string[]): void {
   if (sections === 0) {
     warnings.push('Nenhuma seção marcada ({section: …}) — a cifra ficará sem os badges.')
   }
+
+  // Linhas muito longas com vários acordes costumam indicar versos juntados
+  // na conversão (cada verso da fonte deve ficar em sua própria linha).
+  parsed.lines.forEach((line, index) => {
+    if (
+      line.type === 'lyric' &&
+      line.text.length > 60 &&
+      line.chords.length >= 3
+    ) {
+      warnings.push(
+        `Linha ${index + 1}: ${line.chords.length} acordes em uma linha longa — confira se versos da fonte não foram juntados.`,
+      )
+    }
+  })
 }
 
 /**

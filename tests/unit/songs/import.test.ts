@@ -229,6 +229,17 @@ describe('parseSongJson — avisos de conteúdo', () => {
     expect(warnings).toContain('barras de compasso')
     expect(warnings).toContain('[2x]')
   })
+
+  it('avisa quando uma linha de letra parece ter versos juntados', () => {
+    const result = parseSongJson(
+      JSON.stringify({
+        title: 'T',
+        content:
+          '{section: Verso 1}\n[C]Rei do meu coração [Am]Seja o monte que percorro [F9]A fonte que eu bebo [C]És minha canção\n',
+      }),
+    )
+    expect(result.warnings.join(' ')).toContain('versos da fonte não foram juntados')
+  })
 })
 
 describe('normalizeSongKey', () => {

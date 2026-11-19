@@ -2,9 +2,11 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 import {
   ChevronRight,
+  Clock,
   ListMusic,
   Loader2,
   Plus,
+  CheckCircle2,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -54,6 +56,31 @@ function countLabel(count: number): string {
   if (count === 0) return 'Nenhuma música'
   if (count === 1) return '1 música'
   return `${count} músicas`
+}
+
+/** Um setlist é "próximo" quando não tem data definida ou a data é futura. */
+function isUpcoming(eventDate: string | null): boolean {
+  if (!eventDate) return true
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const event = new Date(eventDate)
+  event.setHours(0, 0, 0, 0)
+  return event >= today
+}
+
+/** Ordena setlists futuros por data crescente (o mais próximo primeiro) e
+ * passados por data decrescente (o mais recente primeiro). Setlists sem data
+ * ficam no fim da lista dos próximos. */
+function sortRows(rows: SetlistRow[], upcoming: boolean): SetlistRow[] {
+  return [...rows].sort((a, b) => {
+    const da = a.setlist.event_date
+    const db = b.setlist.event_date
+    if (!da && !db) return 0
+    if (!da) return 1 // sem data vai para o fim
+    if (!db) return -1
+    const diff = new Date(da).getTime() - new Date(db).getTime()
+    return upcoming ? diff : -diff
+  })
 }
 
 /**
@@ -154,6 +181,130 @@ export function SetlistsPage() {
     }
   }
 
+  function renderSetlistCard({
+    setlist,
+    count,
+    upcoming,
+  }: {
+    setlist: Setlist
+    count: number
+    upcoming: boolean
+  }) {
+    const eventDate = setlist.event_date ? formatDateOnlyPtBr(setlist.event_date) : ''
+
+    // Card de evento futuro: maior, mais destaque, borda e ícone destacados.
+    if (upcoming) {
+      return (
+        <li key={setlist.id}>
+          <Card className="h-full overflow-hidden p-0 border-lg shadow-sm">
+            <button
+              type="button"
+              onClick={() => navigate(`/setlist/${setlist.id}`)}
+              aria-label={`Abrir setlist ${setlist.name}`}
+              className="flex h-full w-full items-center gap-4 rounded-xl p-5 text-left outline-none transition-all hover:bg-accent/100 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+            >
+              <span
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                aria-hidden
+              >
+                <ListMusic className="h-6 w-6" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="block truncate font-medium leading-snug text-foreground">
+                    {setlist.name}
+                  </span>
+                  {eventDate && (
+                    <span className="text-xs font-medium text-primary">
+                      Próximo ·
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 mt-1">
+                  {eventDate ? (
+                    <>
+                      <Clock className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+                      <span className="text-sm text-muted-foreground">
+                        {eventDate}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-xs text-muted-foreground italic">
+                      Sem data definida
+                    </span>
+                  )}
+                  <span className="text-xs text-muted-foreground">
+                    ·
+                    {countLabel(count)}
+                  </span>
+                </div>
+              </span>
+              <ChevronRight
+                className="h-5 w-5 shrink-0 text-primary transition-transform group-hover:translate-x-1"
+                aria-hidden
+              />
+            </button>
+          </Card>
+        </li>
+      )
+    }
+
+    // Card de evento passado: menor, menos destaque, cores sutis, só consulta.
+    return (
+      <li key={setlist.id}>
+        <Card className="h-full overflow-hidden p-0 border-border/50 bg-muted/50">
+          <button
+            type="button"
+            onClick={() => navigate(`/setlist/${setlist.id}`)}
+            aria-label={`Abrir setlist ${setlist.name}`}
+            className="flex h-full w-full items-center gap-3 rounded-lg p-3 text-left outline-none transition-colors hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          >
+            <span
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted/50 text-muted-foreground"
+              aria-hidden
+            >
+              <ListMusic className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <div className="flex items-center gap-1">
+                <span className="block truncate font-medium text-sm text-foreground/80 leading-snug">
+                  {setlist.name}
+                </span>
+                {eventDate && (
+                  <span className="text-[10px] font-medium text-muted-foreground">
+                    Passado ·
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1 mt-0.5">
+                {eventDate ? (
+                  <>
+                    <CheckCircle2 className="h-3 w-3 text-muted-foreground/60" aria-hidden />
+                    <span className="text-xs text-muted-foreground/80">
+                      {eventDate}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-xs text-muted-foreground/60 italic">
+                    Sem data definida
+                  </span>
+                )}
+                <span className="text-xs text-muted-foreground/60">
+                  ·
+                  {countLabel(count)}
+                </span>
+              </div>
+            </span>
+            <ChevronRight
+              className="h-4 w-4 shrink-0 text-muted-foreground/50"
+              aria-hidden
+            />
+          </button>
+        </Card>
+      </li>
+    )
+  }
+
   function renderBody() {
     if (teamLoading || status === 'loading') {
       return <LoadingState label="Carregando setlists…" />
@@ -190,44 +341,37 @@ export function SetlistsPage() {
       )
     }
 
+    const upcomingRows = sortRows(rows.filter((row) => isUpcoming(row.setlist.event_date)), true)
+    const pastRows = sortRows(rows.filter((row) => !isUpcoming(row.setlist.event_date)), false)
+
     return (
-      <ul className="grid gap-3 lg:grid-cols-2">
-        {rows.map(({ setlist, count }) => {
-          const eventDate = formatDateOnlyPtBr(setlist.event_date)
-          return (
-            <li key={setlist.id}>
-              <Card className="h-full overflow-hidden p-0">
-                <button
-                  type="button"
-                  onClick={() => navigate(`/setlist/${setlist.id}`)}
-                  aria-label={`Abrir setlist ${setlist.name}`}
-                  className="flex h-full w-full items-center gap-3 rounded-xl p-4 text-left outline-none transition-colors hover:bg-accent/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                >
-                  <span
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
-                    aria-hidden
-                  >
-                    <ListMusic className="h-6 w-6" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium leading-snug">
-                      {setlist.name}
-                    </span>
-                    <span className="mt-0.5 block text-sm text-muted-foreground">
-                      {eventDate ? `${eventDate} · ` : ''}
-                      {countLabel(count)}
-                    </span>
-                  </span>
-                  <ChevronRight
-                    className="h-5 w-5 shrink-0 text-muted-foreground"
-                    aria-hidden
-                  />
-                </button>
-              </Card>
-            </li>
-          )
-        })}
-      </ul>
+      <div className="space-y-6">
+        {upcomingRows.length > 0 && (
+          <section>
+            <h2 className="text-sm font-semibold text-foreground tracking-tight uppercase">
+              Próximos eventos
+            </h2>
+            <ul className="grid gap-3 lg:grid-cols-2 mt-2">
+              {upcomingRows.map(({ setlist, count }) =>
+                renderSetlistCard({ setlist, count, upcoming: true })
+              )}
+            </ul>
+          </section>
+        )}
+
+        {pastRows.length > 0 && (
+          <section>
+            <h2 className="text-sm font-semibold text-muted-foreground tracking-tight uppercase">
+              Eventos passados
+            </h2>
+            <ul className="grid gap-2 lg:grid-cols-3 mt-2">
+              {pastRows.map(({ setlist, count }) =>
+                renderSetlistCard({ setlist, count, upcoming: false })
+              )}
+            </ul>
+          </section>
+        )}
+      </div>
     )
   }
 

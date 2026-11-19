@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { ArrowLeft, Loader2, Trash2 } from 'lucide-react'
+import { ArrowLeft, FileJson, Loader2, Trash2, TriangleAlert } from 'lucide-react'
 
 import { RequireEditor } from '@/app/guards'
 import { Button } from '@/components/ui/button'
@@ -26,10 +26,25 @@ import {
   listSongs,
   updateSong,
 } from '@/features/songs/service'
+import {
+  SONG_IMPORT_MAX_BYTES,
+  SongImportError,
+  parseSongJson,
+  type ImportedSongValues,
+} from '@/features/songs/import'
 import { useTeam } from '@/features/teams/TeamContext'
 import { cn, friendlyErrorMessage } from '@/lib/utils'
 import { collectThemes } from '@/features/songs/filter'
 import type { Song } from '@/types/domain'
+
+type ImportFeedback =
+  | {
+      kind: 'success'
+      fileName: string
+      values: ImportedSongValues
+      warnings: string[]
+    }
+  | { kind: 'error'; fileName: string; issues: string[] }
 
 /**
  * Serviços de cifras lançam erros com mensagem PT-BR pronta — exibimos direto.
@@ -102,6 +117,15 @@ function SongEditorContent() {
   // Temas já usados na equipe: base do autocomplete no campo de temas.
   const [availableThemes, setAvailableThemes] = useState<string[]>([])
   const teamId = activeTeam?.id
+
+  // Importação do JSON gerado pela skill (apenas em "Nova cifra").
+  const importInputRef = useRef<HTMLInputElement>(null)
+  const [importing, setImporting] = useState(false)
+  const [importedValues, setImportedValues] =
+    useState<ImportedSongValues | null>(null)
+  const [importFeedback, setImportFeedback] = useState<ImportFeedback | null>(
+    null,
+  )
 
   useEffect(() => {
     if (!teamId) {
@@ -183,6 +207,53 @@ function SongEditorContent() {
     }
   }
 
+  /**
+   * Importa o JSON da skill: só preenche os campos do formulário — nada é
+   * salvo até a pessoa conferir e tocar em "Criar cifra". O nome do arquivo e
+   * os avisos ficam no diálogo de conferência.
+   */
+  async function handleImportFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    // limpa o input para permitir escolher o mesmo arquivo de novo
+    event.target.value = ''
+    if (!file) return
+
+    if (file.size > SONG_IMPORT_MAX_BYTES) {
+      setImportFeedback({
+        kind: 'error',
+        fileName: file.name,
+        issues: ['O arquivo é muito grande — o limite é 1 MB.'],
+      })
+      return
+    }
+
+    setImporting(true)
+    try {
+      const result = parseSongJson(await file.text())
+      setImportedValues(result.values)
+      // o arquivo substitui o rascunho restaurado: esconde o banner antigo
+      setRestoredDraft(undefined)
+      setServerError(null)
+      setImportFeedback({
+        kind: 'success',
+        fileName: file.name,
+        values: result.values,
+        warnings: result.warnings,
+      })
+    } catch (error) {
+      setImportFeedback({
+        kind: 'error',
+        fileName: file.name,
+        issues:
+          error instanceof SongImportError
+            ? error.issues
+            : ['Não foi possível ler o arquivo. Tente novamente.'],
+      })
+    } finally {
+      setImporting(false)
+    }
+  }
+
   // Rascunho restaurado tem prioridade sobre os dados salvos; descartar
   // remonta o formulário com os valores do servidor.
   const baseValues: Partial<SongEditorFormValues> | undefined = song
@@ -203,6 +274,7 @@ function SongEditorContent() {
   function discardDraft() {
     localStorage.removeItem(draftKey)
     setRestoredDraft(undefined)
+    setImportedValues(null)
     setDraftNonce((nonce) => nonce + 1)
   }
 
@@ -284,6 +356,7 @@ function SongEditorContent() {
             submitLabel={isEdit ? 'Salvar alterações' : 'Criar cifra'}
             draftKey={draftKey}
             availableThemes={availableThemes}
+            importedValues={importedValues}
           />
         </div>
       </>
@@ -307,20 +380,46 @@ function SongEditorContent() {
           <p className="text-sm text-muted-foreground">
             {isEdit
               ? `Atualizando${song ? ` “${song.title}”` : ''} — nada é salvo até você confirmar.`
-              : 'Preencha os campos e acompanhe a prévia ao vivo.'}
+              : 'Preencha os campos ou importe o JSON gerado pela skill — a prévia acompanha.'}
           </p>
         </div>
 
-        {isEdit && song ? (
-          <Button
-            variant="outline"
-            className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-            onClick={() => setDeleteOpen(true)}
-          >
-            <Trash2 aria-hidden />
-            Excluir cifra
-          </Button>
-        ) : null}
+        {isEdit ? (
+          song ? (
+            <Button
+              variant="outline"
+              className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 aria-hidden />
+              Excluir cifra
+            </Button>
+          ) : null
+        ) : (
+          <div className="flex items-center gap-2">
+            <input
+              ref={importInputRef}
+              type="file"
+              accept="application/json,.json"
+              className="sr-only"
+              aria-label="Selecionar arquivo JSON da cifra"
+              onChange={(event) => void handleImportFile(event)}
+            />
+            <Button
+              variant="outline"
+              onClick={() => importInputRef.current?.click()}
+              disabled={importing}
+              aria-busy={importing}
+            >
+              {importing ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <FileJson aria-hidden />
+              )}
+              {importing ? 'Lendo arquivo…' : 'Importar JSON'}
+            </Button>
+          </div>
+        )}
       </header>
 
       {renderBody()}
@@ -370,6 +469,112 @@ function SongEditorContent() {
               )}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Conferência da importação: nada é salvo sem revisar os campos */}
+      <Dialog
+        open={importFeedback !== null}
+        onOpenChange={(open) => {
+          if (!open) setImportFeedback(null)
+        }}
+      >
+        <DialogContent>
+          {importFeedback?.kind === 'success' ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Cifra importada</DialogTitle>
+                <DialogDescription>
+                  Os campos foram preenchidos com “{importFeedback.fileName}”.
+                  Confira os dados e os avisos antes de salvar.
+                </DialogDescription>
+              </DialogHeader>
+
+              <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+                <dt className="text-muted-foreground">Título</dt>
+                <dd className="font-medium">{importFeedback.values.title}</dd>
+                <dt className="text-muted-foreground">Artista</dt>
+                <dd>{importFeedback.values.artist || '—'}</dd>
+                <dt className="text-muted-foreground">Tom</dt>
+                <dd>{importFeedback.values.original_key ?? 'Sem tom'}</dd>
+                <dt className="text-muted-foreground">BPM</dt>
+                <dd>{importFeedback.values.bpm || '—'}</dd>
+                <dt className="text-muted-foreground">Compasso</dt>
+                <dd>{importFeedback.values.time_signature ?? '—'}</dd>
+                <dt className="text-muted-foreground">Temas</dt>
+                <dd>
+                  {importFeedback.values.themes.length > 0
+                    ? importFeedback.values.themes.join(', ')
+                    : '—'}
+                </dd>
+                <dt className="text-muted-foreground">Conteúdo</dt>
+                <dd>
+                  {importFeedback.values.content.length.toLocaleString('pt-BR')}{' '}
+                  caracteres
+                </dd>
+              </dl>
+
+              {importFeedback.warnings.length > 0 ? (
+                <div
+                  role="status"
+                  className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400"
+                >
+                  <p className="flex items-center gap-1.5 font-medium">
+                    <TriangleAlert className="h-4 w-4" aria-hidden />
+                    Revise antes de salvar
+                  </p>
+                  <ul className="mt-1 list-disc space-y-1 pl-5">
+                    {importFeedback.warnings.map((warning, index) => (
+                      <li key={index}>{warning}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Nenhum aviso automático. Confira a prévia ao lado e salve.
+                </p>
+              )}
+
+              <DialogFooter>
+                <Button onClick={() => setImportFeedback(null)}>
+                  Revisar campos
+                </Button>
+              </DialogFooter>
+            </>
+          ) : importFeedback?.kind === 'error' ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Não foi possível importar</DialogTitle>
+                <DialogDescription>
+                  “{importFeedback.fileName}” não pôde ser usado.
+                </DialogDescription>
+              </DialogHeader>
+              <ul
+                role="alert"
+                className="list-disc space-y-1 pl-5 text-sm text-destructive"
+              >
+                {importFeedback.issues.map((issue, index) => (
+                  <li key={index}>{issue}</li>
+                ))}
+              </ul>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setImportFeedback(null)}
+                >
+                  Fechar
+                </Button>
+                <Button
+                  onClick={() => {
+                    setImportFeedback(null)
+                    importInputRef.current?.click()
+                  }}
+                >
+                  Escolher outro arquivo
+                </Button>
+              </DialogFooter>
+            </>
+          ) : null}
         </DialogContent>
       </Dialog>
     </div>

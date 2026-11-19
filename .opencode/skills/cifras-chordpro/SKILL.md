@@ -184,7 +184,10 @@ G7M  D/F#  A7(4)                →  Gmaj7  D/F#  A7sus4   (preferível)
 7. **Duplicidade**: procure na biblioteca por título (sem acentos,
    minúsculas) e artista. Se existir, **não crie**; reporte e pare (a menos que
    o pedido seja explicitamente “atualizar”).
-8. **Cadastro**: preencha os campos e salve. Offline não permite escrita.
+8. **Cadastro**: na tela **Nova cifra**, use **Importar JSON** para selecionar o
+   arquivo validado — os campos do formulário são preenchidos e você confere
+   antes de salvar. Também é possível preencher manualmente. Offline não
+   permite escrita.
 9. **Conferência no app**: abra a cifra e verifique badges, alinhamento, modo
    cantor (só letra) e transposição ±2. O texto-fonte não pode mudar ao
    transpor.

@@ -25,9 +25,9 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { normalizeThemes, isOnline } from '@/lib/utils'
+import { SONG_KEYS } from '@/features/songs/keys'
 import type { SongDraft } from '@/types/domain'
 
-const NOTES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
 const NONE_KEY = '__none__'
 export const CONTENT_MAX_LENGTH = 20000
 /** Fórmulas de compasso aceitas (MVP). */
@@ -49,7 +49,7 @@ const BPM_MAX = 400
 
 const songFormSchema = z.object({
   title: z.string().trim().min(1, 'Informe o título da cifra.').max(200, 'O título deve ter até 200 caracteres.'),
-  artist: z.string().trim().max(120, 'O artista deve ter até 120 caracteres.').optional().or(z.literal('')),
+  artist: z.string().trim().max(200, 'O artista deve ter até 200 caracteres.').optional().or(z.literal('')),
   original_key: z.string().nullable().optional(),
   bpm: z
     .string()
@@ -106,6 +106,12 @@ interface SongEditorFormProps {
   draftKey?: string
   /** Temas já existentes na equipe — alimentam as sugestões do autocomplete. */
   availableThemes?: string[]
+  /**
+   * Valores de uma cifra importada de JSON. Quando o objeto muda, todos os
+   * campos são substituídos e marcados como alterados — o preview e o
+   * rascunho local acompanham.
+   */
+  importedValues?: Partial<SongEditorFormValues> | null
 }
 
 export function SongEditorForm({
@@ -117,11 +123,26 @@ export function SongEditorForm({
   preview,
   draftKey,
   availableThemes = [],
+  importedValues,
 }: SongEditorFormProps) {
   const { control, handleSubmit, setValue, formState: { errors, isDirty } } = useForm<SongEditorFormValues>({
     resolver: zodResolver(songFormSchema) as unknown as Resolver<SongEditorFormValues>,
     defaultValues: { title: '', artist: '', original_key: null, bpm: '', time_signature: null, themes: [], content: '', ...defaultValues },
   })
+
+  // Importação de JSON: aplica os valores no formulário já montado (sem
+  // remontar) para atualizar o preview na hora e marcar como rascunho sujo.
+  useEffect(() => {
+    if (!importedValues) return
+    const options = { shouldDirty: true, shouldValidate: true } as const
+    setValue('title', importedValues.title ?? '', options)
+    setValue('artist', importedValues.artist ?? '', options)
+    setValue('original_key', importedValues.original_key ?? null, options)
+    setValue('bpm', importedValues.bpm ?? '', options)
+    setValue('time_signature', importedValues.time_signature ?? null, options)
+    setValue('themes', importedValues.themes ?? [], options)
+    setValue('content', importedValues.content ?? '', options)
+  }, [importedValues, setValue])
 
   // Persistência local do rascunho: sobrevive à recarga da aba (mobile descarta
   // abas em segundo plano) sem perder o que foi digitado.
@@ -246,7 +267,7 @@ export function SongEditorForm({
                     <SelectTrigger id="song-key" className="w-40"><SelectValue placeholder="Sem tom" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value={NONE_KEY}>Sem tom</SelectItem>
-                      {NOTES.map((note) => <SelectItem key={note} value={note}>{note}</SelectItem>)}
+                      {SONG_KEYS.map((note) => <SelectItem key={note} value={note}>{note}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 )}

@@ -14,8 +14,9 @@ modo tocar — funcionando offline no celular do culto.
   papéis **dono / editor / membro**; ingresso por convite com código (expira em
   7 dias, revogável); isolamento de dados por equipe no banco (RLS).
 - **Cifra padronizada (ChordPro)** — editor com validação, acordes `[Am]`
-  inline, linhas só de acordes, metatags `{key: …}`, pré-visualização ao vivo;
-  editor/dono criam e excluem; membros apenas leem.
+  inline, linhas só de acordes, metatags `{key: …}`, pré-visualização ao vivo,
+  importação do JSON gerado pela skill de conversão; editor/dono criam e
+  excluem; membros apenas leem.
 - **Biblioteca** — busca instantânea por título/artista, filtro por tema
   (chips), ordenação alfabética, atalho para criar cifra.
 - **Visualizador** — leitura confortável, transposição em semitons sem alterar
@@ -85,7 +86,7 @@ equipe do projeto.
 | `npm run dev`        | Servidor de desenvolvimento (Vite)                |
 | `npm run build`      | Type-check (`tsc --noEmit`) + build de produção  |
 | `npm run preview`    | Serve o build de produção localmente             |
-| `npm test`           | Testes de unidade (Vitest, 129 testes)           |
+| `npm test`           | Testes de unidade (Vitest)                       |
 | `npm run test:watch` | Testes em modo watch                             |
 | `npm run lint`       | ESLint (zero erros exigido)                      |
 | `npm run icons`      | Regenera os ícones PWA a partir de `public/icons/icon.svg` |
